@@ -158,13 +158,17 @@ impl PosixACL {
         Ok(())
     }
 
-    /// Iterator of acl_entry_t, possibly unsafe
+    /// Iterator of acl_entry_t, unsafe
     unsafe fn raw_iter(&self) -> RawACLIterator {
         RawACLIterator::new(&self)
     }
-    /// Iterator of ACLEntry
-    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = ACLEntry> + 'a> {
-        Box::new(unsafe { self.raw_iter() }.map(ACLEntry::from_entry))
+
+    /// Get all ACLEntry items. The POSIX ACL API does not allow multiple parallel iterators so we
+    /// return a materialized vector just to be safe.
+    pub fn entries(&self) -> Vec<ACLEntry> {
+        unsafe { self.raw_iter() }
+            .map(ACLEntry::from_entry)
+            .collect()
     }
 
     pub fn set(&mut self, qual: Qualifier, perm: u32) {
@@ -332,10 +336,9 @@ mod tests {
     #[test]
     fn iterate() {
         let acl = full_fixture();
-        let entries: Vec<ACLEntry> = acl.iter().collect();
         // XXX is this ordering Linux-specific?
         assert_eq!(
-            entries,
+            acl.entries(),
             [
                 ACLEntry {
                     qual: UserObj,
@@ -371,5 +374,14 @@ mod tests {
                 }
             ]
         );
+    }
+    /** Demonstrate that multiple iterators cannot exist in parallel :( */
+    #[test]
+    #[should_panic(expected = "assertion failed: ")]
+    fn multi_iterator() {
+        let acl = full_fixture();
+        unsafe { acl.raw_iter() }
+            .zip(unsafe { acl.raw_iter() })
+            .for_each(|(a, b)| assert_eq!(a, b))
     }
 }
