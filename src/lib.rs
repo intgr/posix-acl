@@ -25,6 +25,7 @@ fn path_to_cstring(path: &Path) -> CString {
     CString::new(path.as_os_str().as_bytes()).unwrap()
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Qualifier {
     Undefined,
     UserObj,
@@ -51,6 +52,57 @@ impl Qualifier {
         match self {
             User(uid) | Group(uid) => Some(*uid),
             _ => None,
+        }
+    }
+    /// Convert C type acl_entry_t to Rust Qualifier
+    fn from_entry(entry: acl_entry_t) -> Qualifier {
+        let tag_type;
+        unsafe {
+            tag_type = mem::zeroed();
+            let ret = acl_get_tag_type(entry, &tag_type);
+            check_return(ret, "acl_get_tag_type");
+        }
+        match tag_type {
+            ACL_UNDEFINED_TAG => Undefined,
+            ACL_USER_OBJ => UserObj,
+            ACL_GROUP_OBJ => GroupObj,
+            ACL_USER => User(Qualifier::get_entry_uid(entry)),
+            ACL_GROUP => Group(Qualifier::get_entry_uid(entry)),
+            ACL_MASK => Mask,
+            ACL_OTHER => Other,
+            _ => {
+                panic!("Unexpected tag type {}", tag_type);
+            }
+        }
+    }
+    /// Helper function for from_entry()
+    fn get_entry_uid(entry: acl_entry_t) -> u32 {
+        unsafe {
+            let uid: *const u32 = acl_get_qualifier(entry) as *const u32;
+            *uid
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ACLEntry {
+    qual: Qualifier,
+    perm: u32,
+}
+
+impl ACLEntry {
+    /// Convert C type acl_entry_t to Rust ACLEntry
+    fn from_entry(entry: acl_entry_t) -> ACLEntry {
+        let perm;
+        unsafe {
+            let mut permset: acl_permset_t = mem::zeroed();
+            let ret = acl_get_permset(entry, &mut permset);
+            check_return(ret, "acl_get_permset");
+            perm = *(permset as *const u32);
+        }
+        ACLEntry {
+            qual: Qualifier::from_entry(entry),
+            perm,
         }
     }
 }
@@ -106,6 +158,15 @@ impl PosixACL {
         Ok(())
     }
 
+    /// Iterator of acl_entry_t, possibly unsafe
+    unsafe fn raw_iter(&self) -> RawACLIterator {
+        RawACLIterator::new(&self)
+    }
+    /// Iterator of ACLEntry
+    pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = ACLEntry> + 'a> {
+        Box::new(unsafe { self.raw_iter() }.map(ACLEntry::from_entry))
+    }
+
     pub fn set(&mut self, qual: Qualifier, perm: u32) {
         unsafe {
             let mut entry: acl_entry_t = mem::zeroed();
@@ -156,11 +217,62 @@ impl PosixACL {
     }
 }
 
+/* Whaat, these constants aren't declared in acl-sys */
+const ACL_FIRST_ENTRY: i32 = 0;
+const ACL_NEXT_ENTRY: i32 = 1;
+
+struct RawACLIterator<'a> {
+    acl: &'a PosixACL,
+    next: i32,
+}
+
+impl<'a> RawACLIterator<'a> {
+    fn new(acl: &'a PosixACL) -> RawACLIterator {
+        RawACLIterator {
+            acl,
+            next: ACL_FIRST_ENTRY,
+        }
+    }
+}
+
+impl<'a> Iterator for RawACLIterator<'a> {
+    type Item = acl_entry_t;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut entry: acl_entry_t;
+        unsafe {
+            entry = mem::zeroed();
+            let ret = acl_get_entry(self.acl.acl, self.next, &mut entry);
+            if ret == 0 {
+                return None;
+            } else if ret != 1 {
+                check_return(ret, "acl_get_entry");
+            }
+            // OK, ret == 1
+            self.next = ACL_NEXT_ENTRY;
+        }
+        Some(entry)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::PosixACL;
     use crate::Qualifier::*;
+    use crate::{ACLEntry, PosixACL};
     use acl_sys::{ACL_EXECUTE, ACL_READ, ACL_WRITE};
+
+    fn full_fixture() -> PosixACL {
+        let mut acl = PosixACL::new();
+        acl.set(UserObj, ACL_READ | ACL_WRITE);
+        acl.set(User(0), ACL_READ | ACL_WRITE);
+        acl.set(User(99), 0); // nobody
+        acl.set(GroupObj, ACL_READ);
+        acl.set(Group(0), ACL_READ);
+        acl.set(Group(99), 0); // nobody
+        acl.set(Other, 0);
+        acl.fix_mask();
+        acl
+    }
 
     #[test]
     fn new() {
@@ -216,5 +328,48 @@ mod tests {
 
         acl.fix_mask();
         assert!(acl.validate().is_ok());
+    }
+    #[test]
+    fn iterate() {
+        let acl = full_fixture();
+        let entries: Vec<ACLEntry> = acl.iter().collect();
+        // XXX is this ordering Linux-specific?
+        assert_eq!(
+            entries,
+            [
+                ACLEntry {
+                    qual: UserObj,
+                    perm: 6
+                },
+                ACLEntry {
+                    qual: User(0),
+                    perm: 6
+                },
+                ACLEntry {
+                    qual: User(99),
+                    perm: 0
+                },
+                ACLEntry {
+                    qual: GroupObj,
+                    perm: 4
+                },
+                ACLEntry {
+                    qual: Group(0),
+                    perm: 4
+                },
+                ACLEntry {
+                    qual: Group(99),
+                    perm: 0
+                },
+                ACLEntry {
+                    qual: Mask,
+                    perm: 6
+                },
+                ACLEntry {
+                    qual: Other,
+                    perm: 0
+                }
+            ]
+        );
     }
 }
