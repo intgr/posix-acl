@@ -16,6 +16,9 @@ use simple_error::{SimpleError, SimpleResult};
 
 use crate::Qualifier::*;
 
+/// All possible permissions
+pub const ACL_RWX: u32 = ACL_READ | ACL_WRITE | ACL_EXECUTE;
+
 pub struct PosixACL {
     acl: acl_t,
 }
@@ -120,10 +123,27 @@ fn check_pointer<T: ?Sized>(ret: *const T, func: &str) {
 }
 
 impl PosixACL {
-    pub fn new() -> PosixACL {
+    /// Convert a file mode ("chmod" number) into an ACL. This is the primary constructor.
+    ///
+    /// This creates the minimal required entries. By the POSIX ACL spec, every valid ACL must
+    /// contain at least four entries: UserObj, GroupObj, Mask and Other.
+    ///
+    /// Bits higher than 9 (e.g. SUID flag, etc) are ignored.
+    pub fn new(file_mode: u32) -> PosixACL {
+        let mut acl = PosixACL::empty();
+        acl.set(UserObj, (file_mode >> 6) & ACL_RWX);
+        acl.set(GroupObj, (file_mode >> 3) & ACL_RWX);
+        acl.set(Mask, (file_mode >> 3) & ACL_RWX);
+        acl.set(Other, file_mode & ACL_RWX);
+        acl
+    }
+
+    /// Create an empty ACL. NB! Empty ACLs are NOT considered valid.
+    pub fn empty() -> PosixACL {
         PosixACL::with_capacity(6)
     }
 
+    /// Create an empty ACL with capacity. NB! Empty ACLs are NOT considered valid.
     pub fn with_capacity(capacity: usize) -> PosixACL {
         let acl = unsafe { acl_init(capacity as i32) };
         check_pointer(acl, "acl_init");
