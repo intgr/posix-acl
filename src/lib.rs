@@ -28,6 +28,16 @@ fn path_to_cstring(path: &Path) -> CString {
     CString::new(path.as_os_str().as_bytes()).unwrap()
 }
 
+/// Safe wrapper around C pointers to automatically free when going out of scope.
+struct AutoPtr<T>(*mut T);
+
+impl<T> Drop for AutoPtr<T> {
+    fn drop(&mut self) {
+        let ret = unsafe { acl_free(self.0 as *mut c_void) };
+        check_return(ret, "acl_free");
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Qualifier {
     Undefined,
@@ -81,8 +91,9 @@ impl Qualifier {
     /// Helper function for from_entry()
     fn get_entry_uid(entry: acl_entry_t) -> u32 {
         unsafe {
-            let uid: *const u32 = acl_get_qualifier(entry) as *const u32;
-            *uid
+            let uid = AutoPtr(acl_get_qualifier(entry) as *mut u32);
+            check_pointer(uid.0, "acl_get_qualifier");
+            *uid.0
         }
     }
 }
@@ -219,12 +230,11 @@ impl PosixACL {
     }
 
     pub fn as_text(&self) -> String {
-        let chars = unsafe {
-            let mut len: ssize_t = 0;
-            let txt = acl_to_text(self.acl, &mut len);
-            check_pointer(txt, "acl_to_text");
-            from_raw_parts(txt as *const u8, len as usize)
-        };
+        let mut len: ssize_t = 0;
+        let txt = AutoPtr(unsafe { acl_to_text(self.acl, &mut len) });
+        check_pointer(txt.0, "acl_to_text");
+        let chars = unsafe { from_raw_parts(txt.0 as *const u8, len as usize) };
+
         from_utf8(chars).unwrap().to_string()
     }
 
@@ -238,6 +248,12 @@ impl PosixACL {
             bail!("Invalid ACL: {}", self.compact_text());
         }
         Ok(())
+    }
+}
+
+impl Drop for PosixACL {
+    fn drop(&mut self) {
+        AutoPtr(self.acl);
     }
 }
 
@@ -266,6 +282,7 @@ impl<'a> Iterator for RawACLIterator<'a> {
         let mut entry: acl_entry_t;
         unsafe {
             entry = mem::zeroed();
+            // The returned entry is owned by the ACL itself, no need to free it.
             let ret = acl_get_entry(self.acl.acl, self.next, &mut entry);
             if ret == 0 {
                 return None;
