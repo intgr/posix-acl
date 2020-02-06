@@ -87,6 +87,16 @@ fn set_overwrite() {
     acl.set(UserObj, ACL_READ);
     assert_eq!(acl.as_text(), "user::r--\n");
 }
+/// Test .get() method
+#[test]
+fn get() {
+    let acl = full_fixture();
+    assert_eq!(acl.get(UserObj), Some(ACL_READ | ACL_WRITE));
+    assert_eq!(acl.get(GroupObj), Some(ACL_READ));
+    assert_eq!(acl.get(Group(99)), Some(0));
+    assert_eq!(acl.get(User(1234)), None);
+    assert_eq!(acl.get(Mask), Some(ACL_READ | ACL_WRITE));
+}
 #[test]
 fn iterate() {
     let acl = full_fixture();

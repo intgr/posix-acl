@@ -213,6 +213,14 @@ impl PosixACL {
         Self::raw_set_permset(entry, perm);
     }
 
+    /// Get the current `perm` value of `qual`, if any.
+    pub fn get(&self, qual: Qualifier) -> Option<u32> {
+        let entry = self.raw_get_entry(&qual)?;
+
+        // XXX inefficient, no need to construct ACLEntry.
+        Some(ACLEntry::from_entry(entry).perm)
+    }
+
     fn raw_set_permset(entry: acl_entry_t, perm: u32) {
         unsafe {
             let mut permset: acl_permset_t = mem::zeroed();
