@@ -1,3 +1,8 @@
+//! posix-acl is a simple Rust library to interact with POSIX filesystem ACLs. It uses the
+//! operating system's C API internally.
+//!
+//! See the [`PosixACL`] struct as a starting point.
+//!
 #[macro_use]
 extern crate simple_error;
 
@@ -11,7 +16,7 @@ use std::str::from_utf8;
 
 use libc::ssize_t;
 use libc::types::common::c95::c_void;
-use simple_error::{SimpleError, SimpleResult};
+use simple_error::SimpleError;
 
 use crate::Qualifier::*;
 use acl_sys::{
@@ -31,6 +36,7 @@ pub const ACL_EXECUTE: u32 = acl_sys::ACL_EXECUTE;
 /// All possible permissions
 pub const ACL_RWX: u32 = ACL_READ | ACL_WRITE | ACL_EXECUTE;
 
+/// The ACL of a file.
 pub struct PosixACL {
     acl: acl_t,
 }
@@ -50,14 +56,22 @@ impl<T> Drop for AutoPtr<T> {
     }
 }
 
+/// The subject of a permission grant.
 #[derive(Debug, PartialEq)]
 pub enum Qualifier {
+    /// Unrecognized/corrupt entries
     Undefined,
+    /// Permissions for owner of the file
     UserObj,
+    /// Permissions for owning group of the file
     GroupObj,
+    /// Permissions for everyone else not covered by the ACL
     Other,
+    /// Permissions for user with UID `u32` value
     User(u32),
+    /// Permissions for group with GID `u32` value
     Group(u32),
+    /// Auto-generated entry
     Mask,
 }
 
@@ -173,6 +187,7 @@ impl PosixACL {
         PosixACL { acl }
     }
 
+    /// Read a file's ACL and return as `PosixACL` object.
     pub fn read_acl(path: &Path) -> Result<PosixACL, SimpleError> {
         let c_path = path_to_cstring(path);
         let acl: acl_t = unsafe { acl_get_file(c_path.as_ptr(), ACL_TYPE_ACCESS) };
@@ -186,7 +201,10 @@ impl PosixACL {
         Ok(PosixACL { acl })
     }
 
-    pub fn write_acl(&mut self, path: &Path) -> SimpleResult<()> {
+    /// Write the current ACL to a file. Overwrites any existing ACL on the file.
+    ///
+    /// Automatically re-calculates the `Mask` entry and calls validation.
+    pub fn write_acl(&mut self, path: &Path) -> Result<(), SimpleError> {
         let c_path = path_to_cstring(path);
         self.fix_mask();
         self.validate()?;
@@ -201,7 +219,7 @@ impl PosixACL {
         Ok(())
     }
 
-    /// Iterator of acl_entry_t, unsafe
+    /// Iterator of `acl_entry_t`, unsafe
     unsafe fn raw_iter(&self) -> RawACLIterator {
         RawACLIterator::new(&self)
     }
@@ -216,6 +234,8 @@ impl PosixACL {
 
     /// Set the permission of `qual` to `perm`. If this `qual` already exists, it is updated,
     /// otherwise a new one is added.
+    ///
+    /// `perm` must be a combination of the `ACL_` constants, combined by binary OR.
     pub fn set(&mut self, qual: Qualifier, perm: u32) {
         let entry = match self.raw_get_entry(&qual) {
             Some(v) => v,
@@ -272,12 +292,15 @@ impl PosixACL {
         }
     }
 
+    /// Re-calculate the `Qualifier::Mask` entry. This is automatically done during `write_acl()`.
     pub fn fix_mask(&mut self) {
         unsafe {
             check_return(acl_calc_mask(&mut self.acl), "acl_calc_mask");
         }
     }
 
+    /// Return the textual representation of the ACL. Individual entries are separated by newline
+    /// (`'\n'`).
     pub fn as_text(&self) -> String {
         let mut len: ssize_t = 0;
         let txt = AutoPtr(unsafe { acl_to_text(self.acl, &mut len) });
@@ -287,11 +310,13 @@ impl PosixACL {
         from_utf8(chars).unwrap().to_string()
     }
 
-    pub fn compact_text(&self) -> String {
+    fn compact_text(&self) -> String {
         self.as_text().replace('\n', ",")
     }
 
-    pub fn validate(&self) -> SimpleResult<()> {
+    /// Call the platform's validation function. Unfortunately it is not possible to provide
+    /// detailed error messages.
+    pub fn validate(&self) -> Result<(), SimpleError> {
         let ret = unsafe { acl_valid(self.acl) };
         if ret != 0 {
             bail!("Invalid ACL: {}", self.compact_text());
