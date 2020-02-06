@@ -202,17 +202,45 @@ impl PosixACL {
             .collect()
     }
 
+    /// Set the permission of `qual` to `perm`. If this `qual` already exists, it is updated,
+    /// otherwise a new one is added.
     pub fn set(&mut self, qual: Qualifier, perm: u32) {
+        let entry = match self.raw_get_entry(&qual) {
+            Some(v) => v,
+            None => self.raw_add_entry(&qual),
+        };
+
+        Self::raw_set_permset(entry, perm);
+    }
+
+    fn raw_set_permset(entry: acl_entry_t, perm: u32) {
+        unsafe {
+            let mut permset: acl_permset_t = mem::zeroed();
+            check_return(acl_get_permset(entry, &mut permset), "acl_get_permset");
+            check_return(acl_clear_perms(permset), "acl_clear_perms");
+            check_return(acl_add_perm(permset, perm), "acl_add_perm");
+            check_return(acl_set_permset(entry, permset), "acl_set_permset");
+        }
+    }
+
+    fn raw_get_entry(&self, qual: &Qualifier) -> Option<acl_entry_t> {
+        for entry in unsafe { self.raw_iter() } {
+            // XXX this is slightly inefficient, calls to get_entry_uid() could be short-circuited.
+            if Qualifier::from_entry(entry) == *qual {
+                // Found it!
+                return Some(entry);
+            }
+        }
+        None
+    }
+
+    fn raw_add_entry(&mut self, qual: &Qualifier) -> acl_entry_t {
         unsafe {
             let mut entry: acl_entry_t = mem::zeroed();
             check_return(
                 acl_create_entry(&mut self.acl, &mut entry),
                 "acl_create_entry",
             );
-            let mut permset: acl_permset_t = mem::zeroed();
-            check_return(acl_get_permset(entry, &mut permset), "acl_get_permset");
-            check_return(acl_add_perm(permset, perm), "acl_add_perm");
-            check_return(acl_set_permset(entry, permset), "acl_set_permset");
             check_return(acl_set_tag_type(entry, qual.tag_type()), "acl_set_tag_type");
             if let Some(uid) = qual.uid() {
                 check_return(
@@ -220,6 +248,7 @@ impl PosixACL {
                     "acl_set_qualifier",
                 );
             }
+            entry
         }
     }
 

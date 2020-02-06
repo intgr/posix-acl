@@ -1,5 +1,5 @@
 use crate::Qualifier::*;
-use crate::{ACLEntry, PosixACL};
+use crate::{ACLEntry, PosixACL, ACL_RWX};
 use acl_sys::{ACL_EXECUTE, ACL_READ, ACL_WRITE};
 
 fn full_fixture() -> PosixACL {
@@ -75,6 +75,17 @@ fn validate_ok() {
 
     acl.fix_mask();
     assert!(acl.validate().is_ok());
+}
+/// .set() method overwrites previous entry if one exists.
+#[test]
+fn set_overwrite() {
+    let mut acl = PosixACL::empty();
+    acl.set(UserObj, ACL_RWX);
+    assert_eq!(acl.as_text(), "user::rwx\n");
+    acl.set(UserObj, 0);
+    assert_eq!(acl.as_text(), "user::---\n");
+    acl.set(UserObj, ACL_READ);
+    assert_eq!(acl.as_text(), "user::r--\n");
 }
 #[test]
 fn iterate() {
