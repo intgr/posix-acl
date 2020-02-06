@@ -8,6 +8,10 @@ authors = ["Marti Raudsepp <marti@juffo.org>"]
 description = "Simple library to interact with Posix filesystem ACLs"
 readme = "README.md"
 license = "MIT"
+homepage = "https://github.com/intgr/posix-acl"
+repository = "https://github.com/intgr/posix-acl"
+keywords = ["acl", "filesystem", "posix", "unix", "security"]
+categories = ["os::unix-apis", "filesystem", "api-bindings"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
