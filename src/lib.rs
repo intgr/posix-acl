@@ -9,13 +9,25 @@ use std::path::Path;
 use std::slice::from_raw_parts;
 use std::str::from_utf8;
 
-use acl_sys::*;
 use libc::ssize_t;
 use libc::types::common::c95::c_void;
 use simple_error::{SimpleError, SimpleResult};
 
 use crate::Qualifier::*;
+use acl_sys::{
+    acl_add_perm, acl_calc_mask, acl_clear_perms, acl_create_entry, acl_entry_t, acl_free,
+    acl_get_entry, acl_get_file, acl_get_permset, acl_get_qualifier, acl_get_tag_type, acl_init,
+    acl_permset_t, acl_set_file, acl_set_permset, acl_set_qualifier, acl_set_tag_type, acl_t,
+    acl_to_text, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER, ACL_TYPE_ACCESS,
+    ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
+};
 
+/// Read permission
+pub const ACL_READ: u32 = acl_sys::ACL_READ;
+/// Write permission
+pub const ACL_WRITE: u32 = acl_sys::ACL_WRITE;
+/// Execute permission
+pub const ACL_EXECUTE: u32 = acl_sys::ACL_EXECUTE;
 /// All possible permissions
 pub const ACL_RWX: u32 = ACL_READ | ACL_WRITE | ACL_EXECUTE;
 
