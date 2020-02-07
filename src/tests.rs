@@ -97,6 +97,19 @@ fn get() {
     assert_eq!(acl.get(User(1234)), None);
     assert_eq!(acl.get(Mask), Some(ACL_READ | ACL_WRITE));
 }
+/// Test .remove() method
+#[test]
+fn remove() {
+    let acl = PosixACL::new(0o750);
+    assert_eq!(acl.remove(UserObj), Some(ACL_RWX));
+    assert_eq!(acl.remove(UserObj), None);
+
+    assert_eq!(acl.remove(GroupObj), Some(ACL_READ | ACL_EXECUTE));
+    assert_eq!(acl.remove(Other), Some(0));
+    assert_eq!(acl.remove(Mask), Some(ACL_READ | ACL_EXECUTE));
+
+    assert_eq!(acl.entries(), [])
+}
 #[test]
 fn iterate() {
     let acl = full_fixture();

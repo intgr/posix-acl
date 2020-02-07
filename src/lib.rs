@@ -20,10 +20,10 @@ use simple_error::SimpleError;
 
 use crate::Qualifier::*;
 use acl_sys::{
-    acl_add_perm, acl_calc_mask, acl_clear_perms, acl_create_entry, acl_entry_t, acl_free,
-    acl_get_entry, acl_get_file, acl_get_permset, acl_get_qualifier, acl_get_tag_type, acl_init,
-    acl_permset_t, acl_set_file, acl_set_permset, acl_set_qualifier, acl_set_tag_type, acl_t,
-    acl_to_text, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER, ACL_TYPE_ACCESS,
+    acl_add_perm, acl_calc_mask, acl_clear_perms, acl_create_entry, acl_delete_entry, acl_entry_t,
+    acl_free, acl_get_entry, acl_get_file, acl_get_permset, acl_get_qualifier, acl_get_tag_type,
+    acl_init, acl_permset_t, acl_set_file, acl_set_permset, acl_set_qualifier, acl_set_tag_type,
+    acl_t, acl_to_text, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER, ACL_TYPE_ACCESS,
     ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
 };
 
@@ -251,6 +251,19 @@ impl PosixACL {
 
         // XXX inefficient, no need to construct ACLEntry.
         Some(ACLEntry::from_entry(entry).perm)
+    }
+
+    /// Remove entry with matching `qual`. If found, returns the matching `perm`, otherwise `None`
+    pub fn remove(&self, qual: Qualifier) -> Option<u32> {
+        let entry = self.raw_get_entry(&qual)?;
+        let wrapped = ACLEntry::from_entry(entry);
+
+        unsafe {
+            acl_delete_entry(self.acl, entry);
+        }
+
+        // XXX inefficient, no need to construct ACLEntry.
+        Some(wrapped.perm)
     }
 
     fn raw_set_permset(entry: acl_entry_t, perm: u32) {
