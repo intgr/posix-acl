@@ -344,6 +344,12 @@ impl Drop for PosixACL {
     }
 }
 
+impl PartialEq for PosixACL {
+    fn eq(&self, other: &Self) -> bool {
+        self.entries() == other.entries()
+    }
+}
+
 /* Whaat, these constants aren't declared in acl-sys */
 const ACL_FIRST_ENTRY: i32 = 0;
 const ACL_NEXT_ENTRY: i32 = 1;

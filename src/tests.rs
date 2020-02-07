@@ -111,6 +111,16 @@ fn remove() {
     assert_eq!(acl.entries(), [])
 }
 #[test]
+fn equality() {
+    let acl = PosixACL::new(0o751);
+    assert!(acl == acl);
+    assert!(acl == PosixACL::new(0o751));
+    assert!(acl != PosixACL::new(0o741));
+
+    acl.remove(Mask);
+    assert!(acl != PosixACL::new(0o751));
+}
+#[test]
 fn iterate() {
     let acl = full_fixture();
     // XXX is this ordering Linux-specific?
