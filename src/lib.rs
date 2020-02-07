@@ -33,7 +33,7 @@ pub const ACL_READ: u32 = acl_sys::ACL_READ;
 pub const ACL_WRITE: u32 = acl_sys::ACL_WRITE;
 /// Execute permission
 pub const ACL_EXECUTE: u32 = acl_sys::ACL_EXECUTE;
-/// All possible permissions
+/// All possible permissions combined: `ACL_READ | ACL_WRITE | ACL_EXECUTE`
 pub const ACL_RWX: u32 = ACL_READ | ACL_WRITE | ACL_EXECUTE;
 
 /// The ACL of a file.
@@ -161,6 +161,7 @@ fn check_pointer<T: ?Sized>(ret: *const T, func: &str) {
 
 impl PosixACL {
     /// Convert a file mode ("chmod" number) into an ACL. This is the primary constructor.
+    /// Note that modes are usually expressed in Octal, e.g. `PosixACL::new(0o644)`
     ///
     /// This creates the minimal required entries. By the POSIX ACL spec, every valid ACL must
     /// contain at least four entries: UserObj, GroupObj, Mask and Other.

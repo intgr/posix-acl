@@ -19,11 +19,10 @@ Release history
 ---------------
 
 ##### 0.2.0 (2020-02-08)
-* Add badges to README & docs.rs link (#8)
 * Add equality trait for PosixACL (#7)
 * Use GitHub Actions & Docker for CI (#6)
 * Add ACL remove() method
 * Make ACLEntry fields public as intended
 
 ##### 0.1.0 (2020-02-06)
-* Initial release.
+* Initial release
