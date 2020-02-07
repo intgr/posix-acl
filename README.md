@@ -26,4 +26,4 @@ Release history
 * Make ACLEntry fields public as intended
 
 ##### 0.1.0 (2020-02-06)
-* Initial release.
+* Initial release

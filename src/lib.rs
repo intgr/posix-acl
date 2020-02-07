@@ -161,6 +161,7 @@ fn check_pointer<T: ?Sized>(ret: *const T, func: &str) {
 
 impl PosixACL {
     /// Convert a file mode ("chmod" number) into an ACL. This is the primary constructor.
+    /// Note that modes are usually expressed in Octal, e.g. `PosixACL::new(0o644)`
     ///
     /// This creates the minimal required entries. By the POSIX ACL spec, every valid ACL must
     /// contain at least four entries: UserObj, GroupObj, Mask and Other.
