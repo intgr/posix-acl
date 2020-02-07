@@ -126,8 +126,8 @@ impl Qualifier {
 
 #[derive(Debug, PartialEq)]
 pub struct ACLEntry {
-    qual: Qualifier,
-    perm: u32,
+    pub qual: Qualifier,
+    pub perm: u32,
 }
 
 impl ACLEntry {
