@@ -27,6 +27,8 @@ use acl_sys::{
     ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
 };
 
+mod acl_sys;
+
 /// Read permission
 pub const ACL_READ: u32 = acl_sys::ACL_READ;
 /// Write permission
