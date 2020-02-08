@@ -1,0 +1,24 @@
+name: Tests
+on: [push]
+env:
+  DOCKER_BUILDKIT: 1
+jobs:
+
+  rust-nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build on Rust NIGHTLY
+        run: docker build . --tag cargo-build --build-arg=channel=nightly
+      # Run sanitizer checks. Only allowed on Rust nightly. https://github.com/japaric/rust-san
+      - name: LeakSanitizer
+        run: docker run --env RUSTFLAGS="-Z sanitizer=leak" cargo-build cargo test --color=always
+      - name: AddressSanitizer
+        run: docker run --env RUSTFLAGS="-Z sanitizer=address" cargo-build cargo test --color=always
+
+  rust-stable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build on Rust STABLE
+        run: docker build . --tag cargo-build --build-arg=channel=stable
