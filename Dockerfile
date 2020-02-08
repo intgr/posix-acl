@@ -52,7 +52,7 @@ COPY --from=cargo-rustfmt /root/build/Cargo.toml .
 #### Test steps for STABLE
 FROM cargo-build AS cargo-all-stable
 COPY --from=cargo-test /root/build/Cargo.toml .
-COPY --from=cargo-clippy Cargo.toml .
-COPY --from=cargo-rustfmt Cargo.toml .
+COPY --from=cargo-clippy /root/build/Cargo.toml .
+COPY --from=cargo-rustfmt /root/build/Cargo.toml .
 
 FROM cargo-all-$channel AS final
