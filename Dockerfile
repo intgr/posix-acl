@@ -1,8 +1,5 @@
-# ------------------------------------------------------------------------------
-# Cargo Build Stage
-# ------------------------------------------------------------------------------
-
-# Can be "nightly" or "stable"
+# This Dockerfile is mostly for CI, see .github/workflows/tests.yml
+# Run with --build-arg=channel=stable OR --build-arg=channel=nightly (default)
 ARG channel=nightly
 
 # Using Dockerfile conditionals
@@ -25,7 +22,7 @@ RUN rustup component add $components
 # Build Cargo dependencies for cache
 COPY Cargo.toml ./
 RUN mkdir src/ && \
-	echo "fn main() {println!(\"if you see this, the build broke\")}" > src/lib.rs && \
+	echo "pub fn main() {println!(\"dummy function\")}" > src/lib.rs && \
 	cargo build --release && \
 	rm -f target/release/deps/posix-acl*
 
