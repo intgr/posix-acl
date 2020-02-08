@@ -1,0 +1,33 @@
+name: Tests
+on: [push]
+env:
+  DOCKER_BUILDKIT: 1
+jobs:
+
+  rust-nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build on Rust NIGHTLY
+        run: docker build . --target cargo-build --tag cargo-build --build-arg=channel=nightly
+      - name: Test suite
+        run: docker run cargo-build cargo test --color=always
+      # Run sanitizer checks. Only allowed on Rust nightly. https://github.com/japaric/rust-san
+      # Cannot run sanitizers from Dockerfile, CAP_PTRACE is disallowed :(
+      - name: LeakSanitizer
+        run: docker run --env RUSTFLAGS="-Z sanitizer=leak" cargo-build cargo test --color=always
+      - name: AddressSanitizer
+        run: docker run --env RUSTFLAGS="-Z sanitizer=address" cargo-build cargo test --color=always
+
+  rust-stable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build on Rust STABLE
+        run: docker build . --target cargo-build --tag cargo-build --build-arg=channel=stable
+      - name: Test suite
+        run: docker run cargo-build cargo test --color=always
+      - name: Clippy lints
+        run: docker run cargo-build cargo clippy
+      - name: rustfmt
+        run: docker run cargo-build rustfmt --color=always --check **/*.rs
