@@ -27,6 +27,8 @@ jobs:
         run: docker build . --target cargo-build --tag cargo-build --build-arg=channel=stable
       - name: Test suite
         run: docker run cargo-build cargo test --color=always
+      - name: cargo check
+        run: docker run cargo-build cargo check --color=always
       - name: Clippy lints
         run: docker run cargo-build cargo clippy
       - name: rustfmt
