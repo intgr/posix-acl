@@ -15,6 +15,6 @@ categories = ["os::unix-apis", "filesystem", "api-bindings"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-acl-sys = "1.0.1"
+acl-sys = "1.2.0"
 simple-error = "0.2.1"
-libc = "0.1.12"  # Need 0.1 due to acl-sys dependency :(
+libc = "0.2"

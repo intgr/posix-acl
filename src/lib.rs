@@ -15,7 +15,6 @@ use std::slice::from_raw_parts;
 use std::str::from_utf8;
 
 use libc::ssize_t;
-use libc::types::common::c95::c_void;
 use simple_error::SimpleError;
 
 use crate::Qualifier::*;
@@ -26,6 +25,7 @@ use acl_sys::{
     acl_t, acl_to_text, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER, ACL_TYPE_ACCESS,
     ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
 };
+use std::os::raw::c_void;
 
 /// Read permission
 pub const ACL_READ: u32 = acl_sys::ACL_READ;
