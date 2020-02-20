@@ -17,6 +17,8 @@ Read [Documentation on Docs.rs](https://docs.rs/posix-acl/) for more details.
 
 Release history
 ---------------
+##### 0.3.0 (2020-02-20)
+* Update 'acl-sys' and 'libc' dependencies (#14)
 
 ##### 0.2.0 (2020-02-08)
 * Add equality trait for PosixACL (#7)
