@@ -437,6 +437,16 @@ impl PosixACL {
         }
         Ok(())
     }
+
+    /// Returns a raw `acl_t` type that can be used directly in FFI calls to the acl library.
+    ///
+    /// The caller *must not*:
+    ///
+    /// - `acl_free` or otherwise invalidate the returned `acl_t`
+    /// - use this `acl_t` after the PosixACL has been dropped
+    pub fn as_raw(&self) -> acl_sys::acl_t {
+        self.acl
+    }
 }
 
 impl Drop for PosixACL {
