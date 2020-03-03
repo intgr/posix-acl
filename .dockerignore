@@ -1,5 +1,6 @@
 /target
+_local
 .idea
 .git
 Cargo.lock
-Dockerfile
+varia/Dockerfile.tests

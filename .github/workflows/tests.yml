@@ -17,28 +17,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Build on Rust NIGHTLY
-        run: docker build . --target cargo-build --tag cargo-build --build-arg=channel=nightly
+      - name: Test on Rust NIGHTLY
+        # language: shell-script
+        run: |
+          docker build . --pull \
+            -f varia/Dockerfile.tests \
+            --target=cargo-build \
+            --build-arg=channel=nightly \
+            --tag=posixacl-nightly
       - name: Test suite
-        run: docker run cargo-build cargo test --color=always
+        run: docker run posixacl-nightly cargo test --color=always
       # Run sanitizer checks. Only allowed on Rust nightly. https://github.com/japaric/rust-san
       # Cannot run sanitizers from Dockerfile, CAP_PTRACE is disallowed :(
       - name: LeakSanitizer
-        run: docker run --env RUSTFLAGS="-Z sanitizer=leak" cargo-build cargo test --color=always
+        run: docker run --env RUSTFLAGS="-Z sanitizer=leak" posixacl-nightly cargo test --color=always
       - name: AddressSanitizer
-        run: docker run --env RUSTFLAGS="-Z sanitizer=address" cargo-build cargo test --color=always
+        run: docker run --env RUSTFLAGS="-Z sanitizer=address" posixacl-nightly cargo test --color=always
 
   rust-stable:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Build on Rust STABLE
-        run: docker build . --target cargo-build --tag cargo-build --build-arg=channel=stable
+      - name: Test on Rust STABLE
+        run: |
+          docker build . --pull \
+            -f varia/Dockerfile.tests \
+            --target=cargo-build \
+            --build-arg=channel=stable \
+            --tag=posixacl-stable
       - name: Test suite
-        run: docker run cargo-build cargo test --color=always
+        run: docker run posixacl-stable cargo test --color=always
       - name: cargo check
-        run: docker run cargo-build cargo check --color=always
+        run: docker run posixacl-stable cargo check --color=always
       - name: Clippy lints
-        run: docker run cargo-build cargo clippy
+        run: docker run posixacl-stable cargo clippy
       - name: rustfmt
-        run: docker run cargo-build rustfmt --color=always --check **/*.rs
+        run: docker run posixacl-stable rustfmt --color=always --check **/*.rs
