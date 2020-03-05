@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../acl-sys/acl-sys.iml" filepath="$PROJECT_DIR$/../acl-sys/acl-sys.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/posix-acl.iml" filepath="$PROJECT_DIR$/.idea/posix-acl.iml" />
     </modules>
   </component>

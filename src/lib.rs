@@ -453,7 +453,10 @@ impl PartialEq for PosixACL {
 
 /* Whaat, these constants aren't declared in acl-sys */
 const ACL_FIRST_ENTRY: i32 = 0;
+#[cfg(not(target_os = "macos"))]
 const ACL_NEXT_ENTRY: i32 = 1;
+#[cfg(target_os = "macos")]
+const ACL_NEXT_ENTRY: i32 = -1;
 
 struct RawACLIterator<'a> {
     acl: &'a PosixACL,
@@ -469,23 +472,35 @@ impl<'a> RawACLIterator<'a> {
     }
 }
 
+fn errno() -> i32 {
+    Error::last_os_error().raw_os_error().unwrap()
+}
+
 impl<'a> Iterator for RawACLIterator<'a> {
     type Item = acl_entry_t;
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut entry: acl_entry_t;
+        let mut ret;
         unsafe {
             entry = mem::zeroed();
             // The returned entry is owned by the ACL itself, no need to free it.
-            let ret = acl_get_entry(self.acl.acl, self.next, &mut entry);
-            if ret == 0 {
-                return None;
-            } else if ret != 1 {
-                check_return(ret, "acl_get_entry");
-            }
-            // OK, ret == 1
-            self.next = ACL_NEXT_ENTRY;
+            ret = acl_get_entry(self.acl.acl, self.next, &mut entry);
         }
+
+        // It's proven, macOS is an idiot. There's no way to distinguish
+        // between "invalid argument" and "end of ACL".
+        if cfg!(target_os = "macos") && ret == -1 && errno() == libc::EINVAL {
+            ret = 0;
+        }
+
+        if ret == 0 {
+            return None;
+        } else if ret != 1 {
+            check_return(ret, "acl_get_entry");
+        }
+        // OK, ret == 1
+        self.next = ACL_NEXT_ENTRY;
         Some(entry)
     }
 }
