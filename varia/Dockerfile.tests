@@ -27,5 +27,5 @@ RUN mkdir src/ && \
 	rm -f target/release/deps/posix-acl*
 
 # Do the actual build
-COPY src/ src/
+COPY . .
 RUN cargo build
