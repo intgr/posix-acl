@@ -119,12 +119,12 @@ fn equality() {
     let acl = PosixACL::new(0o751);
 
     // Not using assert_eq! because the debug trait is not implemented by PosixACL.
-    assert!(acl == acl);
-    assert!(acl == PosixACL::new(0o751));
-    assert!(acl != PosixACL::new(0o741));
+    assert_eq!(acl, acl);
+    assert_eq!(acl, PosixACL::new(0o751));
+    assert_ne!(acl, PosixACL::new(0o741));
 
     acl.remove(Mask);
-    assert!(acl != PosixACL::new(0o751));
+    assert_ne!(acl, PosixACL::new(0o751));
 }
 #[test]
 fn iterate() {
