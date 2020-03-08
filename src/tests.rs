@@ -2,9 +2,7 @@
 //!
 //! For testing public API (e.g. integration tests), use `tests/main.rs` instead.
 
-use crate::Qualifier::*;
-use crate::{ACLEntry, PosixACL, ACL_RWX};
-use acl_sys::{ACL_EXECUTE, ACL_READ, ACL_WRITE};
+use crate::PosixACL;
 
 /** Demonstrate that multiple iterators cannot exist in parallel :( */
 #[test]
