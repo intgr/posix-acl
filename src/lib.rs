@@ -188,14 +188,29 @@ impl PosixACL {
         PosixACL { acl }
     }
 
-    /// Read a file's ACL and return as `PosixACL` object.
+    /// Read a path's ACL and return as `PosixACL` object.
     pub fn read_acl(path: &Path) -> Result<PosixACL, SimpleError> {
+        Self::read_acl_flags(path, acl_sys::ACL_TYPE_ACCESS)
+    }
+
+    /// Read a directory's default ACL and return as `PosixACL` object.
+    /// This will fail if `path` is not a directory.
+    pub fn read_default_acl(path: &Path) -> Result<PosixACL, SimpleError> {
+        Self::read_acl_flags(path, acl_sys::ACL_TYPE_DEFAULT)
+    }
+
+    fn read_acl_flags(path: &Path, flags: acl_sys::acl_type_t) -> Result<PosixACL, SimpleError> {
         let c_path = path_to_cstring(path);
-        let acl: acl_t = unsafe { acl_get_file(c_path.as_ptr(), ACL_TYPE_ACCESS) };
+        let acl: acl_t = unsafe { acl_get_file(c_path.as_ptr(), flags) };
         if acl.is_null() {
             bail!(
-                "Error reading {} ACL: {}",
+                "Error reading {} {}: {}",
                 path.display(),
+                if flags == acl_sys::ACL_TYPE_DEFAULT {
+                    "default ACL"
+                } else {
+                    "ACL"
+                },
                 Error::last_os_error()
             );
         }
