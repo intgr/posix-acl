@@ -59,7 +59,7 @@ fn validate_empty() {
     acl.fix_mask();
     assert_eq!(
         acl.validate().unwrap_err().as_str(),
-        "Invalid ACL: mask::---,"
+        "Invalid ACL: mask::---"
     );
 }
 #[test]
@@ -74,7 +74,7 @@ fn validate_ok() {
     acl.set(Group(0), ACL_READ);
     assert_eq!(
         acl.validate().unwrap_err().as_str(),
-        "Invalid ACL: user::rw-,user:root:r--,group::rw-,group:root:r--,other::---,"
+        "Invalid ACL: user::rw-,user:root:r--,group::rw-,group:root:r--,other::---"
     );
 
     acl.fix_mask();
@@ -166,5 +166,19 @@ fn iterate() {
                 perm: 0
             }
         ]
+    );
+}
+// Test debug formatting
+#[test]
+fn debug() {
+    // Cannot use `full_fixture()` because UID 99 is not portable
+    let mut acl = PosixACL::new(0o640);
+    acl.set(User(0), ACL_READ | ACL_WRITE);
+    acl.set(Group(0), ACL_READ);
+    acl.fix_mask();
+
+    assert_eq!(
+        format!("{:?}", acl),
+        "PosixACL { \"user::rw-,user:root:rw-,group::r--,group:root:r--,mask::rw-,other::---\" }"
     );
 }

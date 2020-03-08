@@ -25,6 +25,7 @@ use acl_sys::{
     acl_t, acl_to_text, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER, ACL_TYPE_ACCESS,
     ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
 };
+use std::fmt;
 use std::os::raw::c_void;
 
 #[cfg(test)]
@@ -42,6 +43,13 @@ pub const ACL_RWX: u32 = ACL_READ | ACL_WRITE | ACL_EXECUTE;
 /// The ACL of a file.
 pub struct PosixACL {
     acl: acl_t,
+}
+
+/// Custom debug formatting, since output `PosixACL { acl: 0x7fd74c000ca8 }` is not very helpful.
+impl fmt::Debug for PosixACL {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "PosixACL {{ \"{}\" }}", self.compact_text())
+    }
 }
 
 /** NB! Unix-only */
@@ -343,7 +351,7 @@ impl PosixACL {
     }
 
     fn compact_text(&self) -> String {
-        self.as_text().replace('\n', ",")
+        self.as_text().trim_end().replace('\n', ",")
     }
 
     /// Call the platform's validation function. Unfortunately it is not possible to provide
