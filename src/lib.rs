@@ -27,6 +27,9 @@ use acl_sys::{
 };
 use std::os::raw::c_void;
 
+#[cfg(test)]
+mod tests;
+
 /// Read permission
 pub const ACL_READ: u32 = acl_sys::ACL_READ;
 /// Write permission
@@ -404,6 +407,3 @@ impl<'a> Iterator for RawACLIterator<'a> {
         Some(entry)
     }
 }
-
-#[cfg(test)]
-mod tests;
