@@ -257,7 +257,11 @@ fn read_default_acl_file() {
 
     let err = PosixACL::read_default_acl(&path).unwrap_err();
     // That's a confusing error message, but whatever...
-    assert!(err
-        .as_str()
-        .ends_with("/test.file default ACL: Permission denied (os error 13)"));
+    assert_eq!(
+        err.as_str(),
+        format!(
+            "Error reading {} default ACL: Permission denied (os error 13)",
+            path.display()
+        )
+    );
 }
