@@ -9,9 +9,10 @@ use posix_acl::{ACLEntry, PosixACL, ACL_RWX};
 fn full_fixture() -> PosixACL {
     let mut acl = PosixACL::new(0o640);
     acl.set(User(0), ACL_READ | ACL_WRITE);
-    acl.set(User(99), 0);
     acl.set(Group(0), ACL_READ);
-    acl.set(Group(99), 0);
+    // Using UID/GID 55555 that is likely undefined on Linux systems
+    acl.set(User(55555), 0);
+    acl.set(Group(55555), 0);
     acl.fix_mask();
     acl
 }
@@ -59,7 +60,7 @@ fn validate_empty() {
     acl.fix_mask();
     assert_eq!(
         acl.validate().unwrap_err().as_str(),
-        "Invalid ACL: mask::---,"
+        "Invalid ACL: mask::---"
     );
 }
 #[test]
@@ -74,7 +75,7 @@ fn validate_ok() {
     acl.set(Group(0), ACL_READ);
     assert_eq!(
         acl.validate().unwrap_err().as_str(),
-        "Invalid ACL: user::rw-,user:root:r--,group::rw-,group:root:r--,other::---,"
+        "Invalid ACL: user::rw-,user:root:r--,group::rw-,group:root:r--,other::---"
     );
 
     acl.fix_mask();
@@ -97,7 +98,7 @@ fn get() {
     let acl = full_fixture();
     assert_eq!(acl.get(UserObj), Some(ACL_READ | ACL_WRITE));
     assert_eq!(acl.get(GroupObj), Some(ACL_READ));
-    assert_eq!(acl.get(Group(99)), Some(0));
+    assert_eq!(acl.get(Group(55555)), Some(0));
     assert_eq!(acl.get(User(1234)), None);
     assert_eq!(acl.get(Mask), Some(ACL_READ | ACL_WRITE));
 }
@@ -119,12 +120,12 @@ fn equality() {
     let acl = PosixACL::new(0o751);
 
     // Not using assert_eq! because the debug trait is not implemented by PosixACL.
-    assert!(acl == acl);
-    assert!(acl == PosixACL::new(0o751));
-    assert!(acl != PosixACL::new(0o741));
+    assert_eq!(acl, acl);
+    assert_eq!(acl, PosixACL::new(0o751));
+    assert_ne!(acl, PosixACL::new(0o741));
 
     acl.remove(Mask);
-    assert!(acl != PosixACL::new(0o751));
+    assert_ne!(acl, PosixACL::new(0o751));
 }
 #[test]
 fn iterate() {
@@ -142,7 +143,7 @@ fn iterate() {
                 perm: 6
             },
             ACLEntry {
-                qual: User(99),
+                qual: User(55555),
                 perm: 0
             },
             ACLEntry {
@@ -154,7 +155,7 @@ fn iterate() {
                 perm: 4
             },
             ACLEntry {
-                qual: Group(99),
+                qual: Group(55555),
                 perm: 0
             },
             ACLEntry {
@@ -166,5 +167,19 @@ fn iterate() {
                 perm: 0
             }
         ]
+    );
+}
+// Test debug formatting
+#[test]
+fn debug() {
+    let mut acl = full_fixture();
+
+    assert_eq!(
+        format!("{:?}", acl),
+        "PosixACL(\"\
+        user::rw-,user:root:rw-,user:55555:---,\
+        group::r--,group:root:r--,group:55555:---,\
+        mask::rw-,other::---\
+        \")"
     );
 }
