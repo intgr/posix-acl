@@ -9,9 +9,10 @@ use posix_acl::{ACLEntry, PosixACL, ACL_RWX};
 fn full_fixture() -> PosixACL {
     let mut acl = PosixACL::new(0o640);
     acl.set(User(0), ACL_READ | ACL_WRITE);
-    acl.set(User(99), 0);
     acl.set(Group(0), ACL_READ);
-    acl.set(Group(99), 0);
+    // Using UID/GID 55555 that is likely undefined on Linux systems
+    acl.set(User(55555), 0);
+    acl.set(Group(55555), 0);
     acl.fix_mask();
     acl
 }
@@ -97,7 +98,7 @@ fn get() {
     let acl = full_fixture();
     assert_eq!(acl.get(UserObj), Some(ACL_READ | ACL_WRITE));
     assert_eq!(acl.get(GroupObj), Some(ACL_READ));
-    assert_eq!(acl.get(Group(99)), Some(0));
+    assert_eq!(acl.get(Group(55555)), Some(0));
     assert_eq!(acl.get(User(1234)), None);
     assert_eq!(acl.get(Mask), Some(ACL_READ | ACL_WRITE));
 }
@@ -142,7 +143,7 @@ fn iterate() {
                 perm: 6
             },
             ACLEntry {
-                qual: User(99),
+                qual: User(55555),
                 perm: 0
             },
             ACLEntry {
@@ -154,7 +155,7 @@ fn iterate() {
                 perm: 4
             },
             ACLEntry {
-                qual: Group(99),
+                qual: Group(55555),
                 perm: 0
             },
             ACLEntry {
@@ -172,13 +173,18 @@ fn iterate() {
 #[test]
 fn debug() {
     // Cannot use `full_fixture()` because UID 99 is not portable
-    let mut acl = PosixACL::new(0o640);
-    acl.set(User(0), ACL_READ | ACL_WRITE);
-    acl.set(Group(0), ACL_READ);
-    acl.fix_mask();
+    // let mut acl = PosixACL::new(0o640);
+    // acl.set(User(0), ACL_READ | ACL_WRITE);
+    // acl.set(Group(0), ACL_READ);
+    // acl.fix_mask();
+    let mut acl = full_fixture();
 
     assert_eq!(
         format!("{:?}", acl),
-        "PosixACL(\"user::rw-,user:root:rw-,group::r--,group:root:r--,mask::rw-,other::---\")"
+        "PosixACL(\"\
+        user::rw-,user:root:rw-,user:55555:---,\
+        group::r--,group:root:r--,group:55555:---,\
+        mask::rw-,other::---\
+        \")"
     );
 }
