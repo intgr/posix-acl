@@ -26,6 +26,8 @@ RUN mkdir src/ && \
 	cargo build --release && \
 	rm -f target/release/deps/posix-acl*
 
+# Make warnings fatal
+ENV RUSTFLAGS="-D warnings"
 # Do the actual build
 COPY . .
 RUN cargo build

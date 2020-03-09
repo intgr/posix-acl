@@ -50,7 +50,7 @@ impl fmt::Debug for PosixACL {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Not really a tuple, but tuple formatting is compact.
         fmt.debug_tuple("PosixACL")
-            .field(&self.compact_text().to_string())
+            .field(&self.compact_text())
             .finish()
     }
 }

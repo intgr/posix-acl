@@ -172,7 +172,7 @@ fn iterate() {
 // Test debug formatting
 #[test]
 fn debug() {
-    let mut acl = full_fixture();
+    let acl = full_fixture();
 
     assert_eq!(
         format!("{:?}", acl),
