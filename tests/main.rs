@@ -179,6 +179,6 @@ fn debug() {
 
     assert_eq!(
         format!("{:?}", acl),
-        "PosixACL { \"user::rw-,user:root:rw-,group::r--,group:root:r--,mask::rw-,other::---\" }"
+        "PosixACL(\"user::rw-,user:root:rw-,group::r--,group:root:r--,mask::rw-,other::---\")"
     );
 }

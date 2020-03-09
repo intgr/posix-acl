@@ -47,8 +47,11 @@ pub struct PosixACL {
 
 /// Custom debug formatting, since output `PosixACL { acl: 0x7fd74c000ca8 }` is not very helpful.
 impl fmt::Debug for PosixACL {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "PosixACL {{ \"{}\" }}", self.compact_text())
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Not really a tuple, but tuple formatting is compact.
+        fmt.debug_tuple("PosixACL")
+            .field(&self.compact_text().to_string())
+            .finish()
     }
 }
 
