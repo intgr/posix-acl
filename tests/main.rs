@@ -220,7 +220,7 @@ fn read_file_with_no_acl() {
     // On Linux, this is missing the "mask" entry
     assert_eq!(
         format!("{:?}", acl),
-        "PosixACL { \"user::rw-,group::r--,other::---\" }"
+        "PosixACL(\"user::rw-,group::r--,other::---\")"
     );
     // After calling fix_mask it's equal to `PosixACL::new()`
     acl.fix_mask();
@@ -247,7 +247,7 @@ fn write_acl_not_found() {
 fn read_default_acl() {
     let dir = tempdir().unwrap();
     let acl = PosixACL::read_default_acl(dir.path()).unwrap();
-    assert_eq!(format!("{:?}", acl), "PosixACL { \"\" }");
+    assert_eq!(format!("{:?}", acl), "PosixACL(\"\")");
 }
 /// read_default_acl() fails when called with non-directory
 #[test]
