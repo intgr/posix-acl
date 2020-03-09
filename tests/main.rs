@@ -5,6 +5,10 @@
 use acl_sys::{ACL_EXECUTE, ACL_READ, ACL_WRITE};
 use posix_acl::Qualifier::*;
 use posix_acl::{ACLEntry, PosixACL, ACL_RWX};
+use std::fs::OpenOptions;
+use std::os::unix::fs::OpenOptionsExt;
+use std::path::PathBuf;
+use tempfile::{tempdir, TempDir};
 
 fn full_fixture() -> PosixACL {
     let mut acl = PosixACL::new(0o640);
@@ -15,6 +19,18 @@ fn full_fixture() -> PosixACL {
     acl.set(Group(55555), 0);
     acl.fix_mask();
     acl
+}
+
+/// Helper to create empty test files
+fn test_file(dir: &TempDir, name: &str, mode: u32) -> PathBuf {
+    let path = dir.path().join(name);
+    OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .mode(mode)
+        .open(&path)
+        .unwrap();
+    path
 }
 
 #[test]
@@ -181,5 +197,71 @@ fn debug() {
         group::r--,group:root:r--,group:55555:---,\
         mask::rw-,other::---\
         \")"
+    );
+}
+/// Make sure that ACL survives the write+read round-trip
+#[test]
+fn writeread() {
+    let mut acl1 = full_fixture();
+    let dir = tempdir().unwrap();
+    let path = test_file(&dir, "test.file", 0o777);
+
+    let ret = acl1.write_acl(&path);
+    assert_eq!(ret, Ok(()));
+    let acl2 = PosixACL::read_acl(&path).unwrap();
+    assert_eq!(acl1, acl2);
+}
+#[test]
+fn read_file_with_no_acl() {
+    let dir = tempdir().unwrap();
+    let path = test_file(&dir, "test.file", 0o640);
+
+    let mut acl = PosixACL::read_acl(&path).unwrap();
+    // On Linux, this is missing the "mask" entry
+    assert_eq!(
+        format!("{:?}", acl),
+        "PosixACL(\"user::rw-,group::r--,other::---\")"
+    );
+    // After calling fix_mask it's equal to `PosixACL::new()`
+    acl.fix_mask();
+    assert_eq!(acl, PosixACL::new(0o640));
+}
+#[test]
+fn read_acl_not_found() {
+    let ret = PosixACL::read_acl("file_not_found".as_ref());
+    assert_eq!(
+        ret.unwrap_err().as_str(),
+        "Error reading file_not_found ACL: No such file or directory (os error 2)"
+    );
+}
+#[test]
+fn write_acl_not_found() {
+    let mut acl = PosixACL::new(0o644);
+    let err = acl.write_acl("file_not_found".as_ref()).unwrap_err();
+    assert_eq!(
+        err.as_str(),
+        "Error writing file_not_found ACL: No such file or directory (os error 2)"
+    );
+}
+#[test]
+fn read_default_acl() {
+    let dir = tempdir().unwrap();
+    let acl = PosixACL::read_default_acl(dir.path()).unwrap();
+    assert_eq!(format!("{:?}", acl), "PosixACL(\"\")");
+}
+/// read_default_acl() fails when called with non-directory
+#[test]
+fn read_default_acl_file() {
+    let dir = tempdir().unwrap();
+    let path = test_file(&dir, "test.file", 0o777);
+
+    let err = PosixACL::read_default_acl(&path).unwrap_err();
+    // That's a confusing error message, but whatever...
+    assert_eq!(
+        err.as_str(),
+        format!(
+            "Error reading {} default ACL: Permission denied (os error 13)",
+            path.display()
+        )
     );
 }
