@@ -172,11 +172,6 @@ fn iterate() {
 // Test debug formatting
 #[test]
 fn debug() {
-    // Cannot use `full_fixture()` because UID 99 is not portable
-    // let mut acl = PosixACL::new(0o640);
-    // acl.set(User(0), ACL_READ | ACL_WRITE);
-    // acl.set(Group(0), ACL_READ);
-    // acl.fix_mask();
     let mut acl = full_fixture();
 
     assert_eq!(
