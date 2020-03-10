@@ -23,11 +23,11 @@ RUN if test -n "$components"; then rustup component add $components; fi
 COPY Cargo.toml ./
 RUN mkdir src/ && \
 	echo "pub fn main() {println!(\"dummy function\")}" > src/lib.rs && \
-	cargo build --release && \
+	cargo build --lib --tests && \
 	rm -f target/release/deps/posix-acl*
 
 # Make warnings fatal
 ENV RUSTFLAGS="-D warnings"
 # Do the actual build
 COPY . .
-RUN cargo build
+RUN cargo build --lib --tests
