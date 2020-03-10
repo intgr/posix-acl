@@ -5,15 +5,43 @@ posix-acl
 [![Documentation](https://docs.rs/posix-acl/badge.svg)](https://docs.rs/posix-acl/)
 [![Tests status](https://github.com/intgr/posix-acl/workflows/Tests/badge.svg?branch=master)](https://github.com/intgr/posix-acl/actions?query=workflow:Tests)
 
-posix-acl is a simple Rust library to interact with POSIX filesystem ACLs. It uses the operating
-system's C API internally.
-
-Turns out that the C POSIX ACL library is actually quite annoying to work with and this library
-significantly improves on that.
+**posix-acl** is a Rust library to interact with POSIX file system Access Control Lists (ACL).
+It wraps the operating system's C interface with a safe Rust API. The API is deliberately different
+from the POSIX C API to make it easier to use.
 
 NB! Currently only tested on Linux.
 
-Read [Documentation on Docs.rs](https://docs.rs/posix-acl/) for more details.
+Resources:
+* [Library API documentation on Docs.rs](https://docs.rs/posix-acl/)
+* [Background information about ACL behavior](
+https://www.usenix.org/legacy/publications/library/proceedings/usenix03/tech/freenix03/full_papers/gruenbacher/gruenbacher_html/main.html)
+
+### Usage example
+```rust
+use posix_acl::{PosixACL, Qualifier, ACL_READ, ACL_WRITE};
+
+fn main() {
+    // Read ACL from file (if there is no ACL yet, the OS will synthesize one)
+    let mut acl = PosixACL::read_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
+
+    // Get permissions of owning user of the file
+    let perm = acl.get(Qualifier::UserObj).unwrap();
+    assert_eq!(perm, ACL_READ | ACL_WRITE);
+
+    // Get permissions for user UID 1234
+    let perm = acl.get(Qualifier::User(1234));
+    assert!(perm.is_none());
+
+    // Grant read access to group GID 1234 (adds new entry or overwrites an existing entry)
+    acl.set(Qualifier::Group(1234), ACL_READ);
+
+    // Remove ACL entry of group GID 1234
+    acl.remove(Qualifier::Group(1234));
+
+    // Write ACL back to the file
+    acl.write_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
+}
+```
 
 Release history
 ---------------
