@@ -1,8 +1,43 @@
-//! posix-acl is a simple Rust library to interact with POSIX filesystem ACLs. It uses the
-//! operating system's C API internally.
+//! **posix-acl** is a Rust library to interact with POSIX file system Access Control Lists (ACL).
+//! It wraps the operating system's C interface with a safe Rust API. The API is deliberately
+//! different from the POSIX C API to make it easier to use.
 //!
-//! See the [`PosixACL`] struct as a starting point.
+//! NB! Currently only tested on Linux.
 //!
+//! While officially called a "list", The main struct [`PosixACL`] implements a "mapping-like"
+//! interface where key is the [`Qualifier`] enum and value is `u32` containing permission bits.
+//! This is without any loss of functionality, as duplicate entries with the same Qualifier value
+//! are disallowed by POSIX anyway.
+//!
+//! For general information about ACL behavior, read [POSIX Access Control Lists on Linux](
+//! https://www.usenix.org/legacy/publications/library/proceedings/usenix03/tech/freenix03/full_papers/gruenbacher/gruenbacher_html/main.html).
+//!
+//! ## Usage example
+//!
+//! ```
+//! use posix_acl::{PosixACL, Qualifier, ACL_READ, ACL_WRITE};
+//!
+//! # std::fs::File::create("/tmp/posix-acl-testfile");
+//! // Read ACL from file (if there is no ACL yet, the OS will synthesize one)
+//! let mut acl = PosixACL::read_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
+//!
+//! // Get permissions of owning user of the file
+//! let perm = acl.get(Qualifier::UserObj).unwrap();
+//! assert_eq!(perm, ACL_READ | ACL_WRITE);
+//!
+//! // Get permissions for user UID 1234
+//! let perm = acl.get(Qualifier::User(1234));
+//! assert!(perm.is_none());
+//!
+//! // Grant read access to group GID 500 (adds new entry or overwrites an existing entry)
+//! acl.set(Qualifier::Group(1234), ACL_READ);
+//!
+//! // Remove ACL entry of group GID 500
+//! acl.remove(Qualifier::Group(1234));
+//!
+//! // Write ACL back to the file
+//! acl.write_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
+//! ```
 #[macro_use]
 extern crate simple_error;
 
@@ -181,6 +216,14 @@ impl PosixACL {
     /// contain at least four entries: UserObj, GroupObj, Mask and Other.
     ///
     /// Bits higher than 9 (e.g. SUID flag, etc) are ignored.
+    ///
+    /// ```
+    /// use posix_acl::PosixACL;
+    /// assert_eq!(
+    ///     PosixACL::new(0o751).as_text(),
+    ///     "user::rwx\ngroup::r-x\nmask::r-x\nother::--x\n"
+    /// );
+    /// ```
     pub fn new(file_mode: u32) -> PosixACL {
         let mut acl = PosixACL::empty();
         acl.set(UserObj, (file_mode >> 6) & ACL_RWX);
@@ -202,13 +245,16 @@ impl PosixACL {
         PosixACL { acl }
     }
 
-    /// Read a path's ACL and return as `PosixACL` object.
+    /// Read a path's access ACL and return as `PosixACL` object.
     pub fn read_acl(path: &Path) -> Result<PosixACL, SimpleError> {
         Self::read_acl_flags(path, acl_sys::ACL_TYPE_ACCESS)
     }
 
     /// Read a directory's default ACL and return as `PosixACL` object.
     /// This will fail if `path` is not a directory.
+    ///
+    /// Default ACL determines permissions for new files and subdirectories created in the
+    /// directory.
     pub fn read_default_acl(path: &Path) -> Result<PosixACL, SimpleError> {
         Self::read_acl_flags(path, acl_sys::ACL_TYPE_DEFAULT)
     }
@@ -231,9 +277,9 @@ impl PosixACL {
         Ok(PosixACL { acl })
     }
 
-    /// Write the current ACL to a file. Overwrites any existing ACL on the file.
+    /// Write the current ACL to a path's access ACL. Overwrites any existing access ACL.
     ///
-    /// Automatically re-calculates the `Mask` entry and calls validation.
+    /// Automatically re-calculates the magic `Mask` entry and calls validation.
     pub fn write_acl(&mut self, path: &Path) -> Result<(), SimpleError> {
         let c_path = path_to_cstring(path);
         self.fix_mask();
@@ -254,7 +300,7 @@ impl PosixACL {
         RawACLIterator::new(&self)
     }
 
-    /// Get all ACLEntry items. The POSIX ACL API does not allow multiple parallel iterators so we
+    /// Get all ACLEntry items. The POSIX ACL C API does not allow multiple parallel iterators so we
     /// return a materialized vector just to be safe.
     pub fn entries(&self) -> Vec<ACLEntry> {
         unsafe { self.raw_iter() }
@@ -335,7 +381,10 @@ impl PosixACL {
         }
     }
 
-    /// Re-calculate the `Qualifier::Mask` entry. This is automatically done during `write_acl()`.
+    /// Re-calculate the `Qualifier::Mask` entry.
+    ///
+    /// Usually there is no need to call this directly, as this is done during `write_acl()`
+    /// automatically.
     pub fn fix_mask(&mut self) {
         unsafe {
             check_return(acl_calc_mask(&mut self.acl), "acl_calc_mask");
@@ -344,6 +393,8 @@ impl PosixACL {
 
     /// Return the textual representation of the ACL. Individual entries are separated by newline
     /// (`'\n'`).
+    ///
+    /// UID/GID are automatically resolved to names by the platform.
     pub fn as_text(&self) -> String {
         let mut len: ssize_t = 0;
         let txt = AutoPtr(unsafe { acl_to_text(self.acl, &mut len) });
