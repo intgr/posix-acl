@@ -276,7 +276,7 @@ impl PosixACL {
         Ok(PosixACL { acl })
     }
 
-    /// Write the current ACL to a path's access ACL. Overwrites any existing access ACL.
+    /// Write this ACL to a path's access ACL. Overwrites any existing access ACL.
     ///
     /// Automatically re-calculates the magic `Mask` entry and calls validation.
     pub fn write_acl(&mut self, path: &Path) -> Result<(), SimpleError> {
