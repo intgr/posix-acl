@@ -293,6 +293,8 @@ impl PosixACL {
     ///
     /// Default ACL determines permissions for new files and subdirectories created in the
     /// directory.
+    ///
+    /// Automatically re-calculates the magic `Mask` entry and calls validation.
     pub fn write_default_acl(&mut self, path: &Path) -> Result<(), SimpleError> {
         self.write_acl_flags(path, ACL_TYPE_DEFAULT)
     }
@@ -401,8 +403,8 @@ impl PosixACL {
 
     /// Re-calculate the `Qualifier::Mask` entry.
     ///
-    /// Usually there is no need to call this directly, as this is done during `write_acl()`
-    /// automatically.
+    /// Usually there is no need to call this directly, as this is done during
+    /// `write_acl/write_default_acl()` automatically.
     pub fn fix_mask(&mut self) {
         unsafe {
             check_return(acl_calc_mask(&mut self.acl), "acl_calc_mask");
