@@ -211,6 +211,17 @@ fn writeread() {
     let acl2 = PosixACL::read_acl(&path).unwrap();
     assert_eq!(acl1, acl2);
 }
+/// Make sure that *default* ACL survives the write+read round-trip
+#[test]
+fn writeread_default() {
+    let mut acl1 = full_fixture();
+    let dir = tempdir().unwrap();
+
+    let ret = acl1.write_default_acl(dir.path());
+    assert_eq!(ret, Ok(()));
+    let acl2 = PosixACL::read_default_acl(dir.path()).unwrap();
+    assert_eq!(acl1, acl2);
+}
 #[test]
 fn read_file_with_no_acl() {
     let dir = tempdir().unwrap();
@@ -261,6 +272,23 @@ fn read_default_acl_file() {
         err.as_str(),
         format!(
             "Error reading {} default ACL: Permission denied (os error 13)",
+            path.display()
+        )
+    );
+}
+/// write_default_acl() fails when called with non-directory
+#[test]
+fn write_default_acl_file() {
+    let dir = tempdir().unwrap();
+    let path = test_file(&dir, "test.file", 0o644);
+    let mut acl = full_fixture();
+
+    let err = acl.write_default_acl(&path).unwrap_err();
+    // That's a confusing error message, but whatever...
+    assert_eq!(
+        err.as_str(),
+        format!(
+            "Error writing {} default ACL: Permission denied (os error 13)",
             path.display()
         )
     );
