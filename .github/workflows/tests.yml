@@ -32,7 +32,8 @@ jobs:
       - name: LeakSanitizer
         run: docker run --env RUSTFLAGS="-Z sanitizer=leak" posixacl-nightly cargo test --color=always
       - name: AddressSanitizer
-        run: docker run --env RUSTFLAGS="-Z sanitizer=address" posixacl-nightly cargo test --color=always
+        # --tests to omit doc tests, doesn't play nice with AddressSanitizer
+        run: docker run --env RUSTFLAGS="-Z sanitizer=address" posixacl-nightly cargo test --tests --color=always
 
   rust-stable:
     runs-on: ubuntu-latest

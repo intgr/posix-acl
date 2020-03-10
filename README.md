@@ -13,7 +13,7 @@ NB! Currently only tested on Linux.
 
 Resources:
 * [Library API documentation on Docs.rs](https://docs.rs/posix-acl/)
-* [General information about ACL behavior](
+* [Background information about ACL behavior](
 https://www.usenix.org/legacy/publications/library/proceedings/usenix03/tech/freenix03/full_papers/gruenbacher/gruenbacher_html/main.html)
 
 ### Usage example
@@ -27,15 +27,15 @@ fn main() {
     // Get permissions of owning user of the file
     let perm = acl.get(Qualifier::UserObj).unwrap();
     assert_eq!(perm, ACL_READ | ACL_WRITE);
-    
+
     // Get permissions for user UID 1234
     let perm = acl.get(Qualifier::User(1234));
     assert!(perm.is_none());
 
-    // Grant read access to group GID 500 (adds new entry or overwrites an existing entry)
+    // Grant read access to group GID 1234 (adds new entry or overwrites an existing entry)
     acl.set(Qualifier::Group(1234), ACL_READ);
 
-    // Remove ACL entry of group GID 500
+    // Remove ACL entry of group GID 1234
     acl.remove(Qualifier::Group(1234));
 
     // Write ACL back to the file
