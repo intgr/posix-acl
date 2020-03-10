@@ -56,8 +56,8 @@ use acl_sys::{
     acl_add_perm, acl_calc_mask, acl_clear_perms, acl_create_entry, acl_delete_entry, acl_entry_t,
     acl_free, acl_get_entry, acl_get_file, acl_get_permset, acl_get_qualifier, acl_get_tag_type,
     acl_init, acl_permset_t, acl_set_file, acl_set_permset, acl_set_qualifier, acl_set_tag_type,
-    acl_t, acl_to_text, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER, ACL_TYPE_ACCESS,
-    ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
+    acl_t, acl_to_text, acl_type_t, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER,
+    ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT, ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
 };
 use std::fmt;
 use std::os::raw::c_void;
@@ -92,6 +92,15 @@ impl fmt::Debug for PosixACL {
 /// NB! Unix-only
 fn path_to_cstring(path: &Path) -> CString {
     CString::new(path.as_os_str().as_bytes()).unwrap()
+}
+
+/// `acl_type_t` string representation for error messages
+fn type_description(flags: acl_type_t) -> &'static str {
+    match flags {
+        ACL_TYPE_ACCESS => "ACL",
+        ACL_TYPE_DEFAULT => "default ACL",
+        _ => panic!("Invalid flags"),
+    }
 }
 
 /// Safe wrapper around C pointers to automatically free when going out of scope.
@@ -246,7 +255,7 @@ impl PosixACL {
 
     /// Read a path's access ACL and return as `PosixACL` object.
     pub fn read_acl(path: &Path) -> Result<PosixACL, SimpleError> {
-        Self::read_acl_flags(path, acl_sys::ACL_TYPE_ACCESS)
+        Self::read_acl_flags(path, ACL_TYPE_ACCESS)
     }
 
     /// Read a directory's default ACL and return as `PosixACL` object.
@@ -255,21 +264,17 @@ impl PosixACL {
     /// Default ACL determines permissions for new files and subdirectories created in the
     /// directory.
     pub fn read_default_acl(path: &Path) -> Result<PosixACL, SimpleError> {
-        Self::read_acl_flags(path, acl_sys::ACL_TYPE_DEFAULT)
+        Self::read_acl_flags(path, ACL_TYPE_DEFAULT)
     }
 
-    fn read_acl_flags(path: &Path, flags: acl_sys::acl_type_t) -> Result<PosixACL, SimpleError> {
+    fn read_acl_flags(path: &Path, flags: acl_type_t) -> Result<PosixACL, SimpleError> {
         let c_path = path_to_cstring(path);
         let acl: acl_t = unsafe { acl_get_file(c_path.as_ptr(), flags) };
         if acl.is_null() {
             bail!(
                 "Error reading {} {}: {}",
                 path.display(),
-                if flags == acl_sys::ACL_TYPE_DEFAULT {
-                    "default ACL"
-                } else {
-                    "ACL"
-                },
+                type_description(flags),
                 Error::last_os_error()
             );
         }
@@ -280,14 +285,30 @@ impl PosixACL {
     ///
     /// Automatically re-calculates the magic `Mask` entry and calls validation.
     pub fn write_acl(&mut self, path: &Path) -> Result<(), SimpleError> {
+        self.write_acl_flags(path, ACL_TYPE_ACCESS)
+    }
+
+    /// Write this ACL to a directory's default ACL. Overwrites any existing default ACL.
+    /// This will fail if `path` is not a directory.
+    ///
+    /// Default ACL determines permissions for new files and subdirectories created in the
+    /// directory.
+    ///
+    /// Automatically re-calculates the magic `Mask` entry and calls validation.
+    pub fn write_default_acl(&mut self, path: &Path) -> Result<(), SimpleError> {
+        self.write_acl_flags(path, ACL_TYPE_DEFAULT)
+    }
+
+    fn write_acl_flags(&mut self, path: &Path, flags: acl_type_t) -> Result<(), SimpleError> {
         let c_path = path_to_cstring(path);
         self.fix_mask();
         self.validate()?;
-        let ret = unsafe { acl_set_file(c_path.as_ptr(), ACL_TYPE_ACCESS, self.acl) };
+        let ret = unsafe { acl_set_file(c_path.as_ptr(), flags, self.acl) };
         if ret != 0 {
             bail!(
-                "Error writing {} ACL: {}",
+                "Error writing {} {}: {}",
                 path.display(),
+                type_description(flags),
                 Error::last_os_error()
             );
         }
@@ -382,8 +403,8 @@ impl PosixACL {
 
     /// Re-calculate the `Qualifier::Mask` entry.
     ///
-    /// Usually there is no need to call this directly, as this is done during `write_acl()`
-    /// automatically.
+    /// Usually there is no need to call this directly, as this is done during
+    /// `write_acl/write_default_acl()` automatically.
     pub fn fix_mask(&mut self) {
         unsafe {
             check_return(acl_calc_mask(&mut self.acl), "acl_calc_mask");
