@@ -45,6 +45,14 @@ fn main() {
 
 Release history
 ---------------
+##### 0.4.0 (2020-03-10)
+This release is fully API-compatible with 0.3.0.
+* Documentation expanded substantially (#27)
+* Added `read_default_acl()` and `write_default_acl()` to interact with default ACLs of directories
+  (#18, #30). Thanks to @aidanhs!
+* PosixACL struct now implements the `Debug` trait (#24)
+* Improved test coverage and CI workflow
+
 ##### 0.3.0 (2020-02-20)
 * Update 'acl-sys' and 'libc' dependencies (#14)
 
