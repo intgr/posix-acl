@@ -37,10 +37,10 @@
 //! // Write ACL back to the file
 //! acl.write_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
 //! ```
+
 #[macro_use]
 extern crate simple_error;
 
-use core::mem;
 use std::ffi::CString;
 use std::io::Error;
 use std::os::unix::ffi::OsStrExt;
@@ -59,8 +59,9 @@ use acl_sys::{
     acl_t, acl_to_text, acl_type_t, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER,
     ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT, ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
 };
-use std::fmt;
 use std::os::raw::c_void;
+use std::ptr::null_mut;
+use std::{fmt, mem};
 
 #[cfg(test)]
 mod tests;
@@ -152,12 +153,9 @@ impl Qualifier {
     }
     /// Convert C type acl_entry_t to Rust Qualifier
     fn from_entry(entry: acl_entry_t) -> Qualifier {
-        let tag_type;
-        unsafe {
-            tag_type = mem::zeroed();
-            let ret = acl_get_tag_type(entry, &tag_type);
-            check_return(ret, "acl_get_tag_type");
-        }
+        let tag_type = 0;
+        let ret = unsafe { acl_get_tag_type(entry, &tag_type) };
+        check_return(ret, "acl_get_tag_type");
         match tag_type {
             ACL_UNDEFINED_TAG => Undefined,
             ACL_USER_OBJ => UserObj,
@@ -191,8 +189,8 @@ impl ACLEntry {
     /// Convert C type acl_entry_t to Rust ACLEntry
     fn from_entry(entry: acl_entry_t) -> ACLEntry {
         let perm;
+        let mut permset: acl_permset_t = null_mut();
         unsafe {
-            let mut permset: acl_permset_t = mem::zeroed();
             let ret = acl_get_permset(entry, &mut permset);
             check_return(ret, "acl_get_permset");
             perm = *(permset as *const u32);
@@ -364,7 +362,7 @@ impl PosixACL {
 
     fn raw_set_permset(entry: acl_entry_t, perm: u32) {
         unsafe {
-            let mut permset: acl_permset_t = mem::zeroed();
+            let mut permset: acl_permset_t = null_mut();
             check_return(acl_get_permset(entry, &mut permset), "acl_get_permset");
             check_return(acl_clear_perms(permset), "acl_clear_perms");
             check_return(acl_add_perm(permset, perm), "acl_add_perm");
@@ -384,8 +382,8 @@ impl PosixACL {
     }
 
     fn raw_add_entry(&mut self, qual: &Qualifier) -> acl_entry_t {
+        let mut entry: acl_entry_t = null_mut();
         unsafe {
-            let mut entry: acl_entry_t = mem::zeroed();
             check_return(
                 acl_create_entry(&mut self.acl, &mut entry),
                 "acl_create_entry",
@@ -397,8 +395,8 @@ impl PosixACL {
                     "acl_set_qualifier",
                 );
             }
-            entry
         }
+        entry
     }
 
     /// Re-calculate the `Qualifier::Mask` entry.
@@ -503,19 +501,16 @@ impl<'a> Iterator for RawACLIterator<'a> {
     type Item = acl_entry_t;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut entry: acl_entry_t;
-        unsafe {
-            entry = mem::zeroed();
-            // The returned entry is owned by the ACL itself, no need to free it.
-            let ret = acl_get_entry(self.acl.acl, self.next, &mut entry);
-            if ret == 0 {
-                return None;
-            } else if ret != 1 {
-                check_return(ret, "acl_get_entry");
-            }
-            // OK, ret == 1
-            self.next = ACL_NEXT_ENTRY;
+        let mut entry: acl_entry_t = null_mut();
+        // The returned entry is owned by the ACL itself, no need to free it.
+        let ret = unsafe { acl_get_entry(self.acl.acl, self.next, &mut entry) };
+        if ret == 0 {
+            return None;
+        } else if ret != 1 {
+            check_return(ret, "acl_get_entry");
         }
+        // OK, ret == 1
+        self.next = ACL_NEXT_ENTRY;
         Some(entry)
     }
 }
