@@ -2,7 +2,7 @@
 //!
 //! For internal unit tests, use top-level `src/tests.rs` instead.
 
-use acl_sys::{ACL_EXECUTE, ACL_READ, ACL_WRITE, acl_free};
+use acl_sys::{acl_free, ACL_EXECUTE, ACL_READ, ACL_WRITE};
 use posix_acl::Qualifier::*;
 use posix_acl::{ACLEntry, PosixACL, ACL_RWX};
 use std::fs::OpenOptions;
