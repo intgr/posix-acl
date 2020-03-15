@@ -437,6 +437,36 @@ impl PosixACL {
         }
         Ok(())
     }
+
+    /// Consumes the `PosixACL`, returning the wrapped `acl_t`.
+    /// This can then be used directly in FFI calls to the acl library.
+    ///
+    /// To avoid a memory leak, the `acl_t` must either:
+    ///
+    /// - Be converted back to a PosixACL using `PosixACL::from_raw`
+    /// - Have `acl_free` called on it
+    // Note: it's typically considered safe for Rust functions to leak resources (in this specific
+    // case, the function is analogous to the safe `Rc::into_raw` function in the standard library).
+    // For more discussion on this, see [the nomicon](https://doc.rust-lang.org/nomicon/leaking.html).
+    pub fn into_raw(self) -> acl_t {
+        let acl = self.acl;
+        mem::forget(self);
+        acl
+    }
+
+    /// Constructs a `PosixACL` from a raw `acl_t`. You should treat the `acl_t`
+    /// as being 'consumed' by this function.
+    ///
+    /// # Safety
+    ///
+    /// The `acl_t` must be a valid acl (not `(acl_t)NULL`) acl returned
+    /// either `PosixACL::into_raw` or another acl library function.
+    ///
+    /// Improper usage of this function may lead to memory problems (e.g.
+    /// calling it twice on the same acl may lead to a double free).
+    pub unsafe fn from_raw(acl: acl_t) -> Self {
+        Self { acl }
+    }
 }
 
 impl Drop for PosixACL {

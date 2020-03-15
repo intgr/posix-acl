@@ -2,7 +2,7 @@
 //!
 //! For internal unit tests, use top-level `src/tests.rs` instead.
 
-use acl_sys::{ACL_EXECUTE, ACL_READ, ACL_WRITE};
+use acl_sys::{acl_free, ACL_EXECUTE, ACL_READ, ACL_WRITE};
 use posix_acl::Qualifier::*;
 use posix_acl::{ACLEntry, PosixACL, ACL_RWX};
 use std::fs::OpenOptions;
@@ -292,4 +292,19 @@ fn write_default_acl_file() {
             path.display()
         )
     );
+}
+
+#[test]
+fn acl_into_from_raw() {
+    let acl1 = full_fixture();
+    let ptr = acl1.into_raw();
+    let acl2 = unsafe { PosixACL::from_raw(ptr) };
+    assert_eq!(full_fixture(), acl2);
+}
+
+#[test]
+fn acl_into_raw_free() {
+    let acl1 = full_fixture();
+    let ptr = acl1.into_raw();
+    assert_eq!(unsafe { acl_free(ptr) }, 0);
 }
