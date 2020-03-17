@@ -56,8 +56,8 @@ use acl_sys::{
     acl_add_perm, acl_calc_mask, acl_clear_perms, acl_create_entry, acl_delete_entry, acl_entry_t,
     acl_free, acl_get_entry, acl_get_file, acl_get_permset, acl_get_qualifier, acl_get_tag_type,
     acl_init, acl_permset_t, acl_set_file, acl_set_permset, acl_set_qualifier, acl_set_tag_type,
-    acl_t, acl_to_text, acl_type_t, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER,
-    ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT, ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
+    acl_size, acl_t, acl_to_text, acl_type_t, acl_valid, ACL_GROUP, ACL_GROUP_OBJ, ACL_MASK,
+    ACL_OTHER, ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT, ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
 };
 use std::os::raw::c_void;
 use std::ptr::null_mut;
@@ -249,6 +249,10 @@ impl PosixACL {
         let acl = unsafe { acl_init(capacity as i32) };
         check_pointer(acl, "acl_init");
         PosixACL { acl }
+    }
+
+    pub fn len(&self) -> usize {
+        unsafe { acl_size(self.acl) }
     }
 
     /// Read a path's access ACL and return as `PosixACL` object.

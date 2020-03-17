@@ -185,6 +185,15 @@ fn iterate() {
         ]
     );
 }
+#[test]
+fn len() {
+    let acl = PosixACL::new(0o644);
+    // assert_eq!(acl.len(), 4);
+    acl.remove(Mask);
+    // assert_eq!(acl.len(), 3);
+    // ExactSizeIterator should make the allocated capacity precise.
+    assert_eq!(acl.entries().capacity(), 3);
+}
 // Test debug formatting
 #[test]
 fn debug() {
