@@ -45,6 +45,15 @@ fn main() {
 
 Release history
 ---------------
+##### 0.5.0 (2020-03-17)
+
+* **API change:** Now using `AsRef<Path>` in methods that accept paths (`read_acl` etc.) (#33)
+
+  This means `.as_ref()` is no longer needed or allowed when passing paths to these methods.
+* Added methods `into_raw`, `from_raw` for converting to/from raw `acl_t` pointer (#21).
+  Thanks to @aidanhs!
+* Documentation tweaks & code cleanups.
+
 ##### 0.4.0 (2020-03-10)
 This release is fully API-compatible with 0.3.0.
 * Documentation expanded substantially (#27)
