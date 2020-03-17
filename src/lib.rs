@@ -18,7 +18,7 @@
 //!
 //! # std::fs::File::create("/tmp/posix-acl-testfile");
 //! // Read ACL from file (if there is no ACL yet, the OS will synthesize one)
-//! let mut acl = PosixACL::read_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
+//! let mut acl = PosixACL::read_acl("/tmp/posix-acl-testfile").unwrap();
 //!
 //! // Get permissions of owning user of the file
 //! let perm = acl.get(Qualifier::UserObj).unwrap();
@@ -35,7 +35,7 @@
 //! acl.remove(Qualifier::Group(1234));
 //!
 //! // Write ACL back to the file
-//! acl.write_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
+//! acl.write_acl("/tmp/posix-acl-testfile").unwrap();
 //! ```
 
 #[macro_use]
@@ -252,8 +252,12 @@ impl PosixACL {
     }
 
     /// Read a path's access ACL and return as `PosixACL` object.
-    pub fn read_acl(path: &Path) -> Result<PosixACL, SimpleError> {
-        Self::read_acl_flags(path, ACL_TYPE_ACCESS)
+    /// ```
+    /// use posix_acl::PosixACL;
+    /// let acl = PosixACL::read_acl("/etc/motd").unwrap();
+    /// ```
+    pub fn read_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, SimpleError> {
+        Self::read_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
     }
 
     /// Read a directory's default ACL and return as `PosixACL` object.
@@ -261,8 +265,12 @@ impl PosixACL {
     ///
     /// Default ACL determines permissions for new files and subdirectories created in the
     /// directory.
-    pub fn read_default_acl(path: &Path) -> Result<PosixACL, SimpleError> {
-        Self::read_acl_flags(path, ACL_TYPE_DEFAULT)
+    /// ```
+    /// use posix_acl::PosixACL;
+    /// let acl = PosixACL::read_default_acl("/tmp").unwrap();
+    /// ```
+    pub fn read_default_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, SimpleError> {
+        Self::read_acl_flags(path.as_ref(), ACL_TYPE_DEFAULT)
     }
 
     fn read_acl_flags(path: &Path, flags: acl_type_t) -> Result<PosixACL, SimpleError> {
@@ -279,22 +287,24 @@ impl PosixACL {
         Ok(PosixACL { acl })
     }
 
-    /// Write this ACL to a path's access ACL. Overwrites any existing access ACL.
+    /// Validate and write this ACL to a path's access ACL. Overwrites any existing access ACL.
     ///
-    /// Automatically re-calculates the magic `Mask` entry and calls validation.
-    pub fn write_acl(&mut self, path: &Path) -> Result<(), SimpleError> {
-        self.write_acl_flags(path, ACL_TYPE_ACCESS)
+    /// Note: this function takes mutable `self` because it automatically re-calculates the magic
+    /// `Mask` entry.
+    pub fn write_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), SimpleError> {
+        self.write_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
     }
 
-    /// Write this ACL to a directory's default ACL. Overwrites any existing default ACL.
+    /// Validate and write this ACL to a directory's default ACL. Overwrites existing default ACL.
     /// This will fail if `path` is not a directory.
     ///
     /// Default ACL determines permissions for new files and subdirectories created in the
     /// directory.
     ///
-    /// Automatically re-calculates the magic `Mask` entry and calls validation.
-    pub fn write_default_acl(&mut self, path: &Path) -> Result<(), SimpleError> {
-        self.write_acl_flags(path, ACL_TYPE_DEFAULT)
+    /// Note: this function takes mutable `self` because it automatically re-calculates the magic
+    /// `Mask` entry.
+    pub fn write_default_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), SimpleError> {
+        self.write_acl_flags(path.as_ref(), ACL_TYPE_DEFAULT)
     }
 
     fn write_acl_flags(&mut self, path: &Path, flags: acl_type_t) -> Result<(), SimpleError> {
