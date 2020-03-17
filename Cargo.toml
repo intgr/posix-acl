@@ -1,11 +1,11 @@
 [package]
 name = "posix-acl"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2018"
 
 # Metadata
 authors = ["Marti Raudsepp <marti@juffo.org>"]
-description = "Simple library to interact with Posix filesystem ACLs"
+description = "Simple library to interact with POSIX filesystem ACLs"
 readme = "README.md"
 license = "MIT"
 homepage = "https://github.com/intgr/posix-acl"
