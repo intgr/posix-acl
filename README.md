@@ -22,7 +22,7 @@ use posix_acl::{PosixACL, Qualifier, ACL_READ, ACL_WRITE};
 
 fn main() {
     // Read ACL from file (if there is no ACL yet, the OS will synthesize one)
-    let mut acl = PosixACL::read_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
+    let mut acl = PosixACL::read_acl("/tmp/posix-acl-testfile").unwrap();
 
     // Get permissions of owning user of the file
     let perm = acl.get(Qualifier::UserObj).unwrap();
@@ -39,7 +39,7 @@ fn main() {
     acl.remove(Qualifier::Group(1234));
 
     // Write ACL back to the file
-    acl.write_acl("/tmp/posix-acl-testfile".as_ref()).unwrap();
+    acl.write_acl("/tmp/posix-acl-testfile").unwrap();
 }
 ```
 

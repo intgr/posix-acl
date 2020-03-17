@@ -7,7 +7,7 @@ use posix_acl::Qualifier::*;
 use posix_acl::{ACLEntry, PosixACL, ACL_RWX};
 use std::fs::OpenOptions;
 use std::os::unix::fs::OpenOptionsExt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tempfile::{tempdir, TempDir};
 
 fn full_fixture() -> PosixACL {
@@ -239,7 +239,7 @@ fn read_file_with_no_acl() {
 }
 #[test]
 fn read_acl_not_found() {
-    let ret = PosixACL::read_acl("file_not_found".as_ref());
+    let ret = PosixACL::read_acl("file_not_found");
     assert_eq!(
         ret.unwrap_err().as_str(),
         "Error reading file_not_found ACL: No such file or directory (os error 2)"
@@ -248,7 +248,7 @@ fn read_acl_not_found() {
 #[test]
 fn write_acl_not_found() {
     let mut acl = PosixACL::new(0o644);
-    let err = acl.write_acl("file_not_found".as_ref()).unwrap_err();
+    let err = acl.write_acl("file_not_found").unwrap_err();
     assert_eq!(
         err.as_str(),
         "Error writing file_not_found ACL: No such file or directory (os error 2)"
@@ -259,6 +259,18 @@ fn read_default_acl() {
     let dir = tempdir().unwrap();
     let acl = PosixACL::read_default_acl(dir.path()).unwrap();
     assert_eq!(format!("{:?}", acl), "PosixACL(\"\")");
+}
+/// Test different types accepted by AsRef<Path>
+#[test]
+fn path_types() {
+    PosixACL::read_acl("/tmp").unwrap();
+    PosixACL::read_acl(&"/tmp").unwrap();
+    PosixACL::read_acl(String::from("/tmp")).unwrap();
+    PosixACL::read_acl(&String::from("/tmp")).unwrap();
+    PosixACL::read_acl(Path::new("/tmp")).unwrap();
+    PosixACL::read_acl(&Path::new("/tmp")).unwrap();
+    PosixACL::read_acl(PathBuf::from("/tmp")).unwrap();
+    PosixACL::read_acl(&PathBuf::from("/tmp")).unwrap();
 }
 /// read_default_acl() fails when called with non-directory
 #[test]
