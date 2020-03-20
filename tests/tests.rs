@@ -223,7 +223,7 @@ fn read_file_with_no_acl() {
     let dir = tempdir().unwrap();
     let path = test_file(&dir, "test.file", 0o640);
 
-    let mut acl = PosixACL::read_acl(&path).unwrap();
+    let acl = PosixACL::read_acl(&path).unwrap();
     assert_eq!(
         format!("{:?}", acl),
         "PosixACL(\"user::rw-,group::r--,other::---\")"
