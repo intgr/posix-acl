@@ -49,26 +49,25 @@ impl PartialEq for PosixACL {
 }
 
 impl PosixACL {
-    /// Convert a file mode ("chmod" number) into an ACL. This is the primary constructor.
-    /// Note that modes are usually expressed in Octal, e.g. `PosixACL::new(0o644)`
+    /// Convert a file mode ("chmod" number) into a "minimal" ACL. This is the primary constructor.
+    /// Note that modes are usually expressed in octal, e.g. `PosixACL::new(0o644)`
     ///
     /// This creates the minimal required entries. By the POSIX ACL spec, every valid ACL must
-    /// contain at least four entries: UserObj, GroupObj, Mask and Other.
+    /// contain at least three entries: UserObj, GroupObj and Other, corresponding to file mode bits.
     ///
-    /// Bits higher than 9 (e.g. SUID flag, etc) are ignored.
+    /// Input bits higher than 9 (e.g. SUID flag, etc) are ignored.
     ///
     /// ```
     /// use posix_acl::PosixACL;
     /// assert_eq!(
     ///     PosixACL::new(0o751).as_text(),
-    ///     "user::rwx\ngroup::r-x\nmask::r-x\nother::--x\n"
+    ///     "user::rwx\ngroup::r-x\nother::--x\n"
     /// );
     /// ```
     pub fn new(file_mode: u32) -> PosixACL {
         let mut acl = PosixACL::empty();
         acl.set(UserObj, (file_mode >> 6) & ACL_RWX);
         acl.set(GroupObj, (file_mode >> 3) & ACL_RWX);
-        acl.set(Mask, (file_mode >> 3) & ACL_RWX);
         acl.set(Other, file_mode & ACL_RWX);
         acl
     }
