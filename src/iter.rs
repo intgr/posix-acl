@@ -2,12 +2,8 @@ use crate::util::check_return;
 
 use crate::PosixACL;
 
-use acl_sys::{acl_entry_t, acl_get_entry};
+use acl_sys::{acl_entry_t, acl_get_entry, ACL_FIRST_ENTRY, ACL_NEXT_ENTRY};
 use std::ptr::null_mut;
-
-/* Whaat, these constants aren't declared in acl-sys */
-const ACL_FIRST_ENTRY: i32 = 0;
-const ACL_NEXT_ENTRY: i32 = 1;
 
 pub(crate) struct RawACLIterator<'a> {
     acl: &'a PosixACL,
@@ -46,7 +42,8 @@ impl<'a> Iterator for RawACLIterator<'a> {
 #[should_panic(expected = "assertion failed: ")]
 fn multi_iterator() {
     let acl = PosixACL::new(0o640);
-    unsafe { acl.raw_iter() }
-        .zip(unsafe { acl.raw_iter() })
-        .for_each(|(a, b)| assert_eq!(a, b))
+    let iter1 = unsafe { acl.raw_iter() };
+    let iter2 = unsafe { acl.raw_iter() };
+
+    iter1.zip(iter2).for_each(|(a, b)| assert_eq!(a, b))
 }
