@@ -36,10 +36,7 @@ fn test_file(dir: &TempDir, name: &str, mode: u32) -> PathBuf {
 #[test]
 fn new() {
     let acl = PosixACL::new(0o751);
-    assert_eq!(
-        acl.as_text(),
-        "user::rwx\ngroup::r-x\nmask::r-x\nother::--x\n"
-    );
+    assert_eq!(acl.as_text(), "user::rwx\ngroup::r-x\nother::--x\n");
     assert_eq!(acl.validate(), Ok(()));
 }
 #[test]
@@ -127,7 +124,6 @@ fn remove() {
 
     assert_eq!(acl.remove(GroupObj), Some(ACL_READ | ACL_EXECUTE));
     assert_eq!(acl.remove(Other), Some(0));
-    assert_eq!(acl.remove(Mask), Some(ACL_READ | ACL_EXECUTE));
 
     assert_eq!(acl.entries(), [])
 }
@@ -140,7 +136,7 @@ fn equality() {
     assert_eq!(acl, PosixACL::new(0o751));
     assert_ne!(acl, PosixACL::new(0o741));
 
-    acl.remove(Mask);
+    acl.remove(Other);
     assert_ne!(acl, PosixACL::new(0o751));
 }
 #[test]
@@ -227,14 +223,11 @@ fn read_file_with_no_acl() {
     let dir = tempdir().unwrap();
     let path = test_file(&dir, "test.file", 0o640);
 
-    let mut acl = PosixACL::read_acl(&path).unwrap();
-    // On Linux, this is missing the "mask" entry
+    let acl = PosixACL::read_acl(&path).unwrap();
     assert_eq!(
         format!("{:?}", acl),
         "PosixACL(\"user::rw-,group::r--,other::---\")"
     );
-    // After calling fix_mask it's equal to `PosixACL::new()`
-    acl.fix_mask();
     assert_eq!(acl, PosixACL::new(0o640));
 }
 #[test]
