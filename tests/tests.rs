@@ -118,12 +118,16 @@ fn get() {
 /// Test .remove() method
 #[test]
 fn remove() {
-    let acl = PosixACL::new(0o750);
+    let mut acl = PosixACL::new(0o750);
     assert_eq!(acl.remove(UserObj), Some(ACL_RWX));
     assert_eq!(acl.remove(UserObj), None);
 
     assert_eq!(acl.remove(GroupObj), Some(ACL_READ | ACL_EXECUTE));
     assert_eq!(acl.remove(Other), Some(0));
+
+    assert_eq!(acl.remove(User(1234)), None);
+    acl.set(User(1234), ACL_RWX);
+    assert_eq!(acl.remove(User(1234)), Some(ACL_RWX));
 
     assert_eq!(acl.entries(), [])
 }

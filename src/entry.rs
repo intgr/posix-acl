@@ -1,12 +1,10 @@
-use std::ptr::null_mut;
-
+use crate::util::{check_pointer, check_return, AutoPtr};
+use crate::Qualifier::*;
 use acl_sys::{
     acl_entry_t, acl_get_permset, acl_get_qualifier, acl_get_tag_type, acl_permset_t, ACL_GROUP,
     ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER, ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
 };
-
-use crate::util::{check_pointer, check_return, AutoPtr};
-use crate::Qualifier::*;
+use std::ptr::null_mut;
 
 /// The subject of a permission grant.
 #[derive(Debug, PartialEq)]

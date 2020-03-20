@@ -1,7 +1,5 @@
 use crate::util::check_return;
-
 use crate::PosixACL;
-
 use acl_sys::{acl_entry_t, acl_get_entry, ACL_FIRST_ENTRY, ACL_NEXT_ENTRY};
 use std::ptr::null_mut;
 
