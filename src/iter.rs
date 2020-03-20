@@ -42,8 +42,8 @@ impl<'a> Iterator for RawACLIterator<'a> {
 #[should_panic(expected = "assertion failed: ")]
 fn multi_iterator() {
     let acl = PosixACL::new(0o640);
-    let mut iter1 = unsafe { acl.raw_iter() };
-    let mut iter2 = unsafe { acl.raw_iter() };
+    let iter1 = unsafe { acl.raw_iter() };
+    let iter2 = unsafe { acl.raw_iter() };
 
     iter1.zip(iter2).for_each(|(a, b)| assert_eq!(a, b))
 }
