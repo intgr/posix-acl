@@ -1,11 +1,10 @@
 //! This file is for small helpers & utilities that aren't exported by the library.
+use acl_sys::{acl_free, acl_type_t, ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT};
 use std::ffi::CString;
 use std::io;
 use std::os::raw::c_void;
 use std::os::unix::ffi::OsStrExt;
 use std::path::Path;
-
-use acl_sys::{acl_free, acl_type_t, ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT};
 
 /// NB! Unix-only
 pub(crate) fn path_to_cstring(path: &Path) -> CString {

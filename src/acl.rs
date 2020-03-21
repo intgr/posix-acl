@@ -1,12 +1,3 @@
-use std::io::Error;
-
-use std::path::Path;
-use std::slice::from_raw_parts;
-use std::str::from_utf8;
-
-use libc::ssize_t;
-use simple_error::SimpleError;
-
 use crate::iter::RawACLIterator;
 use crate::util::{check_pointer, check_return, path_to_cstring, type_description, AutoPtr};
 use crate::Qualifier::*;
@@ -17,8 +8,14 @@ use acl_sys::{
     acl_set_qualifier, acl_set_tag_type, acl_t, acl_to_text, acl_type_t, acl_valid,
     ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT,
 };
+use libc::ssize_t;
+use simple_error::SimpleError;
+use std::io::Error;
 use std::os::raw::c_void;
+use std::path::Path;
 use std::ptr::null_mut;
+use std::slice::from_raw_parts;
+use std::str::from_utf8;
 use std::{fmt, mem};
 
 /// The ACL of a file.
@@ -271,6 +268,12 @@ impl PosixACL {
 
     /// Call the platform's validation function. Unfortunately it is not possible to provide
     /// detailed error messages.
+    ///
+    /// Usually there is no need to explicitly call this method, the `write_acl()` method validates
+    /// ACL prior to writing.
+    ///
+    /// If you didn't take special care of the `Mask` entry, it may be necessary to call
+    /// `fix_mask()` prior to `validate()`.
     pub fn validate(&self) -> Result<(), SimpleError> {
         let ret = unsafe { acl_valid(self.acl) };
         if ret != 0 {
