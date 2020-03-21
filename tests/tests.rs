@@ -286,7 +286,7 @@ fn read_default_acl_file() {
     assert_eq!(err.kind(), ErrorKind::PermissionDenied);
     assert_eq!(
         err.to_string(),
-        format!("Error reading default ACL: Permission denied (os error 13)")
+        "Error reading default ACL: Permission denied (os error 13)"
     );
 }
 /// write_default_acl() fails when called with non-directory
@@ -300,7 +300,7 @@ fn write_default_acl_file() {
     // That's a confusing error message, but whatever...
     assert_eq!(
         err.to_string(),
-        format!("Error writing default ACL: Permission denied (os error 13)")
+        "Error writing default ACL: Permission denied (os error 13)"
     );
 }
 
