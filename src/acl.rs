@@ -264,14 +264,16 @@ impl PosixACL {
         self.as_text().trim_end().replace('\n', ",")
     }
 
-    /// Call the platform's validation function. Unfortunately it is not possible to provide
-    /// detailed reasons.
+    /// Call the platform's validation function.
     ///
     /// Usually there is no need to explicitly call this method, the `write_acl()` method validates
     /// ACL prior to writing.
-    ///
     /// If you didn't take special care of the `Mask` entry, it may be necessary to call
     /// `fix_mask()` prior to `validate()`.
+    ///
+    /// Unfortunately it is not possible to provide detailed error reasons, but mainly it can be:
+    /// * Required entries are missing (`UserObj`, `GroupObj`, `Mask` and `Other`).
+    /// * ACL contains entries that are not unique.
     pub fn validate(&self) -> Result<(), ACLError> {
         let ret = unsafe { acl_valid(self.acl) };
         if ret == 0 {

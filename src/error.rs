@@ -15,7 +15,10 @@ pub enum ACLError {
     /// Error reading or writing ACL
     IoError { err: io::Error, flags: u32 },
     /// ACL is not valid and cannot be written.
-    /// Unfortunately it is not possible to provide detailed reasons.
+    ///
+    /// Unfortunately it is not possible to provide detailed reasons, but mainly it can be:
+    /// * Required entries are missing (`UserObj`, `GroupObj`, `Mask` and `Other`).
+    /// * ACL contains entries that are not unique.
     ValidationError,
 }
 
