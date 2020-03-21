@@ -203,13 +203,13 @@ impl PosixACL {
             let mut permset: acl_permset_t = null_mut();
             check_return(acl_get_permset(entry, &mut permset), "acl_get_permset");
             check_return(acl_clear_perms(permset), "acl_clear_perms");
-            if perm & ACL_READ {
+            if perm & ACL_READ != 0 {
                 check_return(acl_add_perm(permset, ACL_READ), "acl_add_perm");
             }
-            if perm & ACL_WRITE {
+            if perm & ACL_WRITE != 0 {
                 check_return(acl_add_perm(permset, ACL_WRITE), "acl_add_perm");
             }
-            if perm & ACL_EXECUTE {
+            if perm & ACL_EXECUTE != 0 {
                 check_return(acl_add_perm(permset, ACL_EXECUTE), "acl_add_perm");
             }
             check_return(acl_set_permset(entry, permset), "acl_set_permset");
