@@ -38,11 +38,9 @@
 //! acl.write_acl("/tmp/posix-acl-testfile").unwrap();
 //! ```
 
-#[macro_use]
-extern crate simple_error;
-
 mod acl;
 mod entry;
+mod error;
 mod iter;
 mod util;
 
@@ -59,3 +57,4 @@ pub const ACL_RWX: u32 = ACL_READ | ACL_WRITE | ACL_EXECUTE;
 pub use acl::PosixACL;
 pub use entry::ACLEntry;
 pub use entry::Qualifier;
+pub use error::ACLError;

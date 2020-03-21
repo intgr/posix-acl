@@ -6,6 +6,7 @@ use acl_sys::{acl_free, ACL_EXECUTE, ACL_READ, ACL_WRITE};
 use posix_acl::Qualifier::*;
 use posix_acl::{ACLEntry, PosixACL, ACL_RWX};
 use std::fs::OpenOptions;
+use std::io::ErrorKind;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use tempfile::{tempdir, TempDir};
@@ -37,7 +38,7 @@ fn test_file(dir: &TempDir, name: &str, mode: u32) -> PathBuf {
 fn new() {
     let acl = PosixACL::new(0o751);
     assert_eq!(acl.as_text(), "user::rwx\ngroup::r-x\nother::--x\n");
-    assert_eq!(acl.validate(), Ok(()));
+    assert!(acl.validate().is_ok());
 }
 #[test]
 fn empty() {
@@ -69,11 +70,14 @@ fn other_mask() {
 #[test]
 fn validate_empty() {
     let mut acl = PosixACL::empty();
-    assert_eq!(acl.validate().unwrap_err().as_str(), "Invalid ACL: ");
+    assert_eq!(
+        acl.validate().unwrap_err().to_string(),
+        "ACL failed validation"
+    );
     acl.fix_mask();
     assert_eq!(
-        acl.validate().unwrap_err().as_str(),
-        "Invalid ACL: mask::---"
+        acl.validate().unwrap_err().to_string(),
+        "ACL failed validation"
     );
 }
 #[test]
@@ -82,13 +86,13 @@ fn validate_ok() {
     acl.set(UserObj, ACL_READ | ACL_WRITE);
     acl.set(GroupObj, ACL_READ | ACL_WRITE);
     acl.set(Other, 0);
-    assert_eq!(acl.validate(), Ok(()));
+    assert!(acl.validate().is_ok());
 
     acl.set(User(0), ACL_READ);
     acl.set(Group(0), ACL_READ);
     assert_eq!(
-        acl.validate().unwrap_err().as_str(),
-        "Invalid ACL: user::rw-,user:root:r--,group::rw-,group:root:r--,other::---"
+        acl.validate().unwrap_err().to_string(),
+        "ACL failed validation"
     );
 
     acl.fix_mask();
@@ -207,7 +211,7 @@ fn writeread() {
     let path = test_file(&dir, "test.file", 0o777);
 
     let ret = acl1.write_acl(&path);
-    assert_eq!(ret, Ok(()));
+    assert!(ret.is_ok());
     let acl2 = PosixACL::read_acl(&path).unwrap();
     assert_eq!(acl1, acl2);
 }
@@ -218,7 +222,7 @@ fn writeread_default() {
     let dir = tempdir().unwrap();
 
     let ret = acl1.write_default_acl(dir.path());
-    assert_eq!(ret, Ok(()));
+    assert!(ret.is_ok());
     let acl2 = PosixACL::read_default_acl(dir.path()).unwrap();
     assert_eq!(acl1, acl2);
 }
@@ -236,19 +240,21 @@ fn read_file_with_no_acl() {
 }
 #[test]
 fn read_acl_not_found() {
-    let ret = PosixACL::read_acl("file_not_found");
+    let err = PosixACL::read_acl("file_not_found").unwrap_err();
+    assert_eq!(err.kind(), ErrorKind::NotFound);
     assert_eq!(
-        ret.unwrap_err().as_str(),
-        "Error reading file_not_found ACL: No such file or directory (os error 2)"
+        err.to_string(),
+        "Error reading ACL: No such file or directory (os error 2)"
     );
 }
 #[test]
 fn write_acl_not_found() {
     let mut acl = PosixACL::new(0o644);
     let err = acl.write_acl("file_not_found").unwrap_err();
+    assert_eq!(err.kind(), ErrorKind::NotFound);
     assert_eq!(
-        err.as_str(),
-        "Error writing file_not_found ACL: No such file or directory (os error 2)"
+        err.to_string(),
+        "Error writing ACL: No such file or directory (os error 2)"
     );
 }
 #[test]
@@ -277,12 +283,10 @@ fn read_default_acl_file() {
 
     let err = PosixACL::read_default_acl(&path).unwrap_err();
     // That's a confusing error message, but whatever...
+    assert_eq!(err.kind(), ErrorKind::PermissionDenied);
     assert_eq!(
-        err.as_str(),
-        format!(
-            "Error reading {} default ACL: Permission denied (os error 13)",
-            path.display()
-        )
+        err.to_string(),
+        format!("Error reading default ACL: Permission denied (os error 13)")
     );
 }
 /// write_default_acl() fails when called with non-directory
@@ -295,11 +299,8 @@ fn write_default_acl_file() {
     let err = acl.write_default_acl(&path).unwrap_err();
     // That's a confusing error message, but whatever...
     assert_eq!(
-        err.as_str(),
-        format!(
-            "Error writing {} default ACL: Permission denied (os error 13)",
-            path.display()
-        )
+        err.to_string(),
+        format!("Error writing default ACL: Permission denied (os error 13)")
     );
 }
 

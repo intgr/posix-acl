@@ -16,7 +16,6 @@ categories = ["os::unix-apis", "filesystem", "api-bindings"]
 
 [dependencies]
 acl-sys = "1.2.1"
-simple-error = "0.2.1"
 libc = "0.2"
 
 [dev-dependencies]

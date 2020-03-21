@@ -1,5 +1,6 @@
+use crate::error::{ACLError, FLAG_WRITE};
 use crate::iter::RawACLIterator;
-use crate::util::{check_pointer, check_return, path_to_cstring, type_description, AutoPtr};
+use crate::util::{check_pointer, check_return, path_to_cstring, AutoPtr};
 use crate::Qualifier::*;
 use crate::{ACLEntry, Qualifier, ACL_RWX};
 use acl_sys::{
@@ -9,7 +10,6 @@ use acl_sys::{
     ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT,
 };
 use libc::ssize_t;
-use simple_error::SimpleError;
 use std::io::Error;
 use std::os::raw::c_void;
 use std::path::Path;
@@ -86,7 +86,7 @@ impl PosixACL {
     /// use posix_acl::PosixACL;
     /// let acl = PosixACL::read_acl("/etc/motd").unwrap();
     /// ```
-    pub fn read_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, SimpleError> {
+    pub fn read_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, ACLError> {
         Self::read_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
     }
 
@@ -99,29 +99,28 @@ impl PosixACL {
     /// use posix_acl::PosixACL;
     /// let acl = PosixACL::read_default_acl("/tmp").unwrap();
     /// ```
-    pub fn read_default_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, SimpleError> {
+    pub fn read_default_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, ACLError> {
         Self::read_acl_flags(path.as_ref(), ACL_TYPE_DEFAULT)
     }
 
-    fn read_acl_flags(path: &Path, flags: acl_type_t) -> Result<PosixACL, SimpleError> {
+    fn read_acl_flags(path: &Path, flags: acl_type_t) -> Result<PosixACL, ACLError> {
         let c_path = path_to_cstring(path);
         let acl: acl_t = unsafe { acl_get_file(c_path.as_ptr(), flags) };
         if acl.is_null() {
-            bail!(
-                "Error reading {} {}: {}",
-                path.display(),
-                type_description(flags),
-                Error::last_os_error()
-            );
+            Err(ACLError::IoError {
+                err: Error::last_os_error(),
+                flags,
+            })
+        } else {
+            Ok(PosixACL { acl })
         }
-        Ok(PosixACL { acl })
     }
 
     /// Validate and write this ACL to a path's access ACL. Overwrites any existing access ACL.
     ///
     /// Note: this function takes mutable `self` because it automatically re-calculates the magic
     /// `Mask` entry.
-    pub fn write_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), SimpleError> {
+    pub fn write_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ACLError> {
         self.write_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
     }
 
@@ -133,24 +132,23 @@ impl PosixACL {
     ///
     /// Note: this function takes mutable `self` because it automatically re-calculates the magic
     /// `Mask` entry.
-    pub fn write_default_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), SimpleError> {
+    pub fn write_default_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ACLError> {
         self.write_acl_flags(path.as_ref(), ACL_TYPE_DEFAULT)
     }
 
-    fn write_acl_flags(&mut self, path: &Path, flags: acl_type_t) -> Result<(), SimpleError> {
+    fn write_acl_flags(&mut self, path: &Path, flags: acl_type_t) -> Result<(), ACLError> {
         let c_path = path_to_cstring(path);
         self.fix_mask();
         self.validate()?;
         let ret = unsafe { acl_set_file(c_path.as_ptr(), flags, self.acl) };
-        if ret != 0 {
-            bail!(
-                "Error writing {} {}: {}",
-                path.display(),
-                type_description(flags),
-                Error::last_os_error()
-            );
+        if ret == 0 {
+            Ok(())
+        } else {
+            Err(ACLError::IoError {
+                err: Error::last_os_error(),
+                flags: FLAG_WRITE | flags,
+            })
         }
-        Ok(())
     }
 
     /// Iterator of `acl_entry_t`, unsafe
@@ -267,19 +265,20 @@ impl PosixACL {
     }
 
     /// Call the platform's validation function. Unfortunately it is not possible to provide
-    /// detailed error messages.
+    /// detailed reasons.
     ///
     /// Usually there is no need to explicitly call this method, the `write_acl()` method validates
     /// ACL prior to writing.
     ///
     /// If you didn't take special care of the `Mask` entry, it may be necessary to call
     /// `fix_mask()` prior to `validate()`.
-    pub fn validate(&self) -> Result<(), SimpleError> {
+    pub fn validate(&self) -> Result<(), ACLError> {
         let ret = unsafe { acl_valid(self.acl) };
-        if ret != 0 {
-            bail!("Invalid ACL: {}", self.compact_text());
+        if ret == 0 {
+            Ok(())
+        } else {
+            Err(ACLError::ValidationError)
         }
-        Ok(())
     }
 
     /// Consumes the `PosixACL`, returning the wrapped `acl_t`.
