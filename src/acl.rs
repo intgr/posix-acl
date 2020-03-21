@@ -2,7 +2,7 @@ use crate::error::{ACLError, FLAG_WRITE};
 use crate::iter::RawACLIterator;
 use crate::util::{check_pointer, check_return, path_to_cstring, AutoPtr};
 use crate::Qualifier::*;
-use crate::{ACLEntry, Qualifier, ACL_RWX};
+use crate::{ACLEntry, Qualifier, ACL_EXECUTE, ACL_READ, ACL_RWX, ACL_WRITE};
 use acl_sys::{
     acl_add_perm, acl_calc_mask, acl_clear_perms, acl_create_entry, acl_delete_entry, acl_entry_t,
     acl_get_file, acl_get_permset, acl_init, acl_permset_t, acl_set_file, acl_set_permset,
@@ -203,7 +203,15 @@ impl PosixACL {
             let mut permset: acl_permset_t = null_mut();
             check_return(acl_get_permset(entry, &mut permset), "acl_get_permset");
             check_return(acl_clear_perms(permset), "acl_clear_perms");
-            check_return(acl_add_perm(permset, perm), "acl_add_perm");
+            if perm & ACL_READ {
+                check_return(acl_add_perm(permset, ACL_READ), "acl_add_perm");
+            }
+            if perm & ACL_WRITE {
+                check_return(acl_add_perm(permset, ACL_WRITE), "acl_add_perm");
+            }
+            if perm & ACL_EXECUTE {
+                check_return(acl_add_perm(permset, ACL_EXECUTE), "acl_add_perm");
+            }
             check_return(acl_set_permset(entry, permset), "acl_set_permset");
         }
     }
