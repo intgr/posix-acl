@@ -7,13 +7,14 @@ use std::{fmt, io};
 /// Use a bit flag to track whether error was caused by read or write
 pub(crate) const FLAG_WRITE: u32 = 0x4000_0000;
 
-/// Error type from ACL operations.
-// Perhaps an overkill, I could just use io::Error instead.
+/// Error type from ACL operations. To distinguish different causes, use the `kind()` method.
+//
+// Perhaps an overkill, I could have used io::Error instead.
 // But now that I wrote this, might as well keep it. :)
 #[derive(Debug)]
 pub enum ACLError {
-    /// Error reading or writing ACL
-    IoError { err: io::Error, flags: u32 },
+    /// Error reading or writing ACL.
+    IoError(IoErrorDetail),
     /// ACL is not valid and cannot be written.
     ///
     /// Unfortunately it is not possible to provide detailed reasons, but mainly it can be:
@@ -22,12 +23,27 @@ pub enum ACLError {
     ValidationError,
 }
 
-impl Error for ACLError {}
+// Stores private fields for ACLError::IoError
+#[derive(Debug)]
+pub struct IoErrorDetail {
+    err: io::Error,
+    flags: u32,
+}
+
+impl Error for ACLError {
+    /// Get underlying `io::Error` value.
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            ValidationError => None,
+            IoError(IoErrorDetail { ref err, .. }) => Some(err),
+        }
+    }
+}
 
 impl fmt::Display for ACLError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            IoError { flags, err } => write!(
+            IoError(IoErrorDetail { flags, err }) => write!(
                 f,
                 "Error {} {}: {}",
                 op_display(*flags),
@@ -51,8 +67,15 @@ impl ACLError {
     pub fn kind(&self) -> ErrorKind {
         match self {
             ValidationError => ErrorKind::InvalidData,
-            IoError { ref err, .. } => err.kind(),
+            IoError(IoErrorDetail { ref err, .. }) => err.kind(),
         }
+    }
+
+    pub(crate) fn last_os_error(flags: u32) -> ACLError {
+        IoError(IoErrorDetail {
+            err: io::Error::last_os_error(),
+            flags,
+        })
     }
 }
 

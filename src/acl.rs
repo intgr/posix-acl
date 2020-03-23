@@ -10,7 +10,6 @@ use acl_sys::{
     ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT,
 };
 use libc::ssize_t;
-use std::io::Error;
 use std::os::raw::c_void;
 use std::path::Path;
 use std::ptr::null_mut;
@@ -107,10 +106,7 @@ impl PosixACL {
         let c_path = path_to_cstring(path);
         let acl: acl_t = unsafe { acl_get_file(c_path.as_ptr(), flags) };
         if acl.is_null() {
-            Err(ACLError::IoError {
-                err: Error::last_os_error(),
-                flags,
-            })
+            Err(ACLError::last_os_error(flags))
         } else {
             Ok(PosixACL { acl })
         }
@@ -144,10 +140,7 @@ impl PosixACL {
         if ret == 0 {
             Ok(())
         } else {
-            Err(ACLError::IoError {
-                err: Error::last_os_error(),
-                flags: FLAG_WRITE | flags,
-            })
+            Err(ACLError::last_os_error(FLAG_WRITE | flags))
         }
     }
 
