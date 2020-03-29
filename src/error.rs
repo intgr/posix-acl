@@ -62,7 +62,8 @@ impl fmt::Display for ACLError {
 }
 
 impl ACLError {
-    /// Get a general category of error. `ValidationError` gets returned as `InvalidData`.
+    /// Get a general category of error, as `std::io::ErrorKind`.
+    /// Validation errors get returned as `InvalidData`.
     ///
     /// ```
     /// use posix_acl::PosixACL;
