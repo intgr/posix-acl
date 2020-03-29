@@ -4,7 +4,7 @@
 
 use acl_sys::{acl_free, ACL_EXECUTE, ACL_READ, ACL_WRITE};
 use posix_acl::Qualifier::*;
-use posix_acl::{ACLEntry, PosixACL, ACL_RWX};
+use posix_acl::{ACLEntry, ACLError, PosixACL, ACL_RWX};
 use std::fs::OpenOptions;
 use std::io::ErrorKind;
 use std::os::unix::fs::OpenOptionsExt;
@@ -70,15 +70,12 @@ fn other_mask() {
 #[test]
 fn validate_empty() {
     let mut acl = PosixACL::empty();
-    assert_eq!(
-        acl.validate().unwrap_err().to_string(),
-        "ACL failed validation"
-    );
+    let err = acl.validate().unwrap_err();
+    assert!(matches!(err, ACLError::ValidationError));
+    assert_eq!(err.kind(), ErrorKind::InvalidData);
+    assert_eq!(err.to_string(), "ACL failed validation");
     acl.fix_mask();
-    assert_eq!(
-        acl.validate().unwrap_err().to_string(),
-        "ACL failed validation"
-    );
+    assert_eq!(acl.validate().unwrap_err().kind(), ErrorKind::InvalidData);
 }
 #[test]
 fn validate_ok() {
@@ -90,10 +87,10 @@ fn validate_ok() {
 
     acl.set(User(0), ACL_READ);
     acl.set(Group(0), ACL_READ);
-    assert_eq!(
-        acl.validate().unwrap_err().to_string(),
-        "ACL failed validation"
-    );
+    assert!(matches!(
+        acl.validate().unwrap_err(),
+        ACLError::ValidationError
+    ));
 
     acl.fix_mask();
     assert!(acl.validate().is_ok());
@@ -241,6 +238,7 @@ fn read_file_with_no_acl() {
 #[test]
 fn read_acl_not_found() {
     let err = PosixACL::read_acl("file_not_found").unwrap_err();
+    assert!(matches!(err, ACLError::IoError(_)));
     assert_eq!(err.kind(), ErrorKind::NotFound);
     assert_eq!(
         err.to_string(),
