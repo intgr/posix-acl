@@ -18,6 +18,10 @@ use std::str::from_utf8;
 use std::{fmt, mem};
 
 /// The ACL of a file.
+///
+/// Implements a "mapping-like" interface where key is the `Qualifier` enum and value is `u32`
+/// containing permission bits.
+/// Using methods `get(qual) -> perms`, `set(qual, perms)`, `remove(qual)`.
 pub struct PosixACL {
     pub(crate) acl: acl_t,
 }
@@ -157,6 +161,14 @@ impl PosixACL {
             .collect()
     }
 
+    /// Get the current `perm` value of `qual`, if any.
+    pub fn get(&self, qual: Qualifier) -> Option<u32> {
+        let entry = self.raw_get_entry(&qual)?;
+
+        // XXX inefficient, no need to construct ACLEntry.
+        Some(ACLEntry::from_entry(entry).perm)
+    }
+
     /// Set the permission of `qual` to `perm`. If this `qual` already exists, it is updated,
     /// otherwise a new one is added.
     ///
@@ -168,14 +180,6 @@ impl PosixACL {
         };
 
         Self::raw_set_permset(entry, perm);
-    }
-
-    /// Get the current `perm` value of `qual`, if any.
-    pub fn get(&self, qual: Qualifier) -> Option<u32> {
-        let entry = self.raw_get_entry(&qual)?;
-
-        // XXX inefficient, no need to construct ACLEntry.
-        Some(ACLEntry::from_entry(entry).perm)
     }
 
     /// Remove entry with matching `qual`. If found, returns the matching `perm`, otherwise `None`
