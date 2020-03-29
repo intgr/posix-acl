@@ -1,6 +1,6 @@
 //! Integration tests for public API.
 //!
-//! For internal unit tests, use top-level `src/tests.rs` instead.
+//! For internal unit tests, write directly into `src/` modules.
 
 use acl_sys::{acl_free, ACL_EXECUTE, ACL_READ, ACL_WRITE};
 use posix_acl::Qualifier::*;
