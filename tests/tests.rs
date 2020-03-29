@@ -71,7 +71,7 @@ fn other_mask() {
 fn validate_empty() {
     let mut acl = PosixACL::empty();
     let err = acl.validate().unwrap_err();
-    assert!(matches!(err, ACLError::ValidationError));
+    assert!(matches!(err, ACLError::ValidationError(_)));
     assert_eq!(err.kind(), ErrorKind::InvalidData);
     assert_eq!(err.to_string(), "ACL failed validation");
     acl.fix_mask();
@@ -89,7 +89,7 @@ fn validate_ok() {
     acl.set(Group(0), ACL_READ);
     assert!(matches!(
         acl.validate().unwrap_err(),
-        ACLError::ValidationError
+        ACLError::ValidationError(_)
     ));
 
     acl.fix_mask();

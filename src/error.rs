@@ -56,7 +56,7 @@ impl fmt::Display for ACLError {
                 type_display(*flags),
                 err
             ),
-            ValidationError => write!(f, "ACL failed validation"),
+            ValidationError(_) => write!(f, "ACL failed validation"),
         }
     }
 }
@@ -72,7 +72,7 @@ impl ACLError {
     /// ```
     pub fn kind(&self) -> ErrorKind {
         match self {
-            ValidationError => ErrorKind::InvalidData,
+            ValidationError(_) => ErrorKind::InvalidData,
             IoError(IoErrorDetail { ref err, .. }) => err.kind(),
         }
     }
