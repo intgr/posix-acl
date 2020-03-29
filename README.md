@@ -9,8 +9,8 @@ posix-acl
 It wraps the operating system's C interface with a safe Rust API. The API is deliberately different
 from the POSIX C API to make it easier to use.
 
-Only works on Linux. FreeBSD support seems viable as well, let me know.
-macOS does not support the POSIX ACL API sufficiently.
+Only works on Linux. FreeBSD support seems viable as well, let me know if there is interest.
+macOS does not support the POSIX ACLs sufficiently for this library.
 
 Resources:
 * [Library API documentation on Docs.rs](https://docs.rs/posix-acl/)
