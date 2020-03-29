@@ -18,6 +18,10 @@ use std::str::from_utf8;
 use std::{fmt, mem};
 
 /// The ACL of a file.
+///
+/// Implements a "mapping-like" interface where key is the `Qualifier` enum and value is `u32`
+/// containing permission bits. Using methods `get(qual) -> perms`, `set(qual, perms)`,
+/// `delete(qual)`.
 pub struct PosixACL {
     pub(crate) acl: acl_t,
 }
