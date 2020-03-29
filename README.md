@@ -51,9 +51,11 @@ Release history
 * **API change:** Now using `ACLError` structured error type instead of `SimpleError` (#39)
 
   Error messages from I/O calls no longer include the file name.
+
 * The `PosixACL::new()` constructor no longer adds a `Mask` entry. (#37)
 
   `Mask` is only needed for "non-minimal" ACLs and automatically added on write if necessary.
+
 * Major reorganization of code. (#35)
 * Documentation improvements.
 
@@ -62,6 +64,7 @@ Release history
 * **API change:** Now using `AsRef<Path>` in methods that accept paths (`read_acl` etc.) (#33)
 
   This means `.as_ref()` is no longer needed or allowed when passing paths to these methods.
+
 * Added methods `into_raw`, `from_raw` for converting to/from raw `acl_t` pointer (#21).
   Thanks to @aidanhs!
 * Documentation tweaks & code cleanups.
