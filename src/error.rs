@@ -17,10 +17,10 @@ pub enum ACLError {
     IoError(IoErrorDetail),
     /// ACL is not valid and cannot be written.
     ///
-    /// Unfortunately it is not possible to provide detailed reasons, but mainly it can be:
+    /// Unfortunately it is not possible to provide detailed reasons, but mainly it can mean:
     /// * Required entries are missing (`UserObj`, `GroupObj`, `Mask` and `Other`).
     /// * ACL contains entries that are not unique.
-    ValidationError,
+    ValidationError(ValidationErrorDetail),
 }
 
 // Stores private fields for ACLError::IoError
@@ -30,11 +30,17 @@ pub struct IoErrorDetail {
     flags: u32,
 }
 
+// Currently an empty struct, created for future extensibility
+#[derive(Debug)]
+pub struct ValidationErrorDetail {
+    _private: (),
+}
+
 impl Error for ACLError {
     /// Get underlying `io::Error` value.
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            ValidationError => None,
+            ValidationError(..) => None,
             IoError(IoErrorDetail { ref err, .. }) => Some(err),
         }
     }
@@ -76,6 +82,10 @@ impl ACLError {
             err: io::Error::last_os_error(),
             flags,
         })
+    }
+
+    pub(crate) fn validation_error() -> ACLError {
+        ValidationError(ValidationErrorDetail { _private: () })
     }
 }
 

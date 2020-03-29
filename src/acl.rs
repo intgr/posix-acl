@@ -272,7 +272,7 @@ impl PosixACL {
         if ret == 0 {
             Ok(())
         } else {
-            Err(ACLError::ValidationError)
+            Err(ACLError::validation_error())
         }
     }
 
