@@ -21,7 +21,7 @@ use std::{fmt, mem};
 ///
 /// Implements a "mapping-like" interface where key is the `Qualifier` enum and value is `u32`
 /// containing permission bits. Using methods `get(qual) -> perms`, `set(qual, perms)`,
-/// `delete(qual)`.
+/// `remove(qual)`.
 pub struct PosixACL {
     pub(crate) acl: acl_t,
 }
