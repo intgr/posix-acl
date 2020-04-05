@@ -15,7 +15,6 @@ ENV components=""
 #### Common logic for base image
 FROM cargo-base-$channel AS cargo-build
 WORKDIR /root/build
-
 # Make warnings fatal
 ENV RUSTFLAGS="-D warnings"
 
