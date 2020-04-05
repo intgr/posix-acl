@@ -51,6 +51,6 @@ jobs:
       - name: cargo check
         run: docker run --rm posixacl-stable cargo check --color=always
       - name: Clippy lints
-        run: docker run --rm posixacl-stable cargo clippy
+        run: docker run --rm posixacl-stable cargo clippy --color=always
       - name: rustfmt
         run: docker run --rm posixacl-stable rustfmt --color=always --check **/*.rs
