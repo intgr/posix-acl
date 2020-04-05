@@ -3,7 +3,7 @@
 //! Run with command: `cargo run --example printacl /some/path`
 
 use posix_acl::Qualifier::*;
-use posix_acl::{ACLEntry, PosixACL, ACL_EXECUTE, ACL_READ, ACL_WRITE};
+use posix_acl::{ACLEntry, ACLError, PosixACL, ACL_EXECUTE, ACL_READ, ACL_WRITE};
 use std::env::args_os;
 use std::path::Path;
 use std::process::exit;
@@ -34,31 +34,39 @@ fn print_acl(acl: PosixACL) {
     }
 }
 
+/// Returns 1 for error, 0 for success
+fn handle_acl_result(result: Result<PosixACL, ACLError>, path: &Path, type_hint: &str) -> u32 {
+    match result {
+        Ok(acl) => {
+            println!("{} {}:", path.display(), type_hint);
+            print_acl(acl);
+            0
+        }
+        Err(e) => {
+            eprintln!("{}: {}", path.display(), e);
+            1
+        }
+    }
+}
+
 fn main() {
     let args = args_os();
     if args.len() <= 1 {
         println!("Usage: printacl [FILE ...]");
         exit(1);
     }
+    let mut errs = 0;
 
     for filename in args.skip(1) {
         let path = Path::new(&filename);
-        match PosixACL::read_acl(path) {
-            Ok(acl) => {
-                println!("{} ACL:", path.display());
-                print_acl(acl)
-            }
-            Err(e) => eprintln!("{}: {}", path.display(), e),
-        }
+        errs += handle_acl_result(PosixACL::read_acl(path), path, "ACL");
+
         if path.is_dir() {
-            match PosixACL::read_default_acl(path) {
-                Ok(acl) => {
-                    println!("{} DEFAULT:", path.display());
-                    print_acl(acl)
-                }
-                Err(e) => eprintln!("{}: {}", path.display(), e),
-            }
+            errs += handle_acl_result(PosixACL::read_default_acl(path), path, "DEFAULT");
         }
-        println!();
+    }
+
+    if errs > 0 {
+        exit(2);
     }
 }
