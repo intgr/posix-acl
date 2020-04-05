@@ -9,25 +9,27 @@ ENV components="rustfmt clippy"
 
 #### Base image for NIGHTLY
 FROM rustlang/rust:nightly AS cargo-base-nightly
-# WTF? clippy is broken in nightly
+# clippy and rustfmt are frequently broken in nightly
 ENV components=""
 
 #### Common logic for base image
 FROM cargo-base-$channel AS cargo-build
 WORKDIR /root/build
+# Make warnings fatal
+ENV RUSTFLAGS="-D warnings"
 
 RUN apt-get update && \
-    apt-get install -y libacl1-dev
+    apt-get install -y libacl1-dev && \
+    rm -rf /var/lib/apt/lists/*
 RUN if test -n "$components"; then rustup component add $components; fi
 # Build Cargo dependencies for cache
 COPY Cargo.toml ./
 RUN mkdir src/ && \
 	echo "pub fn main() {println!(\"dummy function\")}" > src/lib.rs && \
-	cargo build --lib --tests && \
-	rm -f target/release/deps/posix-acl*
+	cargo build --lib --tests --color=always && \
+	rm -rdv target/*/deps/posix_acl-* \
+	        target/*/.fingerprint/posix-acl-*
 
-# Make warnings fatal
-ENV RUSTFLAGS="-D warnings"
 # Do the actual build
 COPY . .
-RUN cargo build --lib --tests
+RUN cargo build --lib --tests --color=always
