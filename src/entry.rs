@@ -71,7 +71,7 @@ impl Qualifier {
     }
 }
 
-/// Returned from [`PosixACL::entries()`](struct.PosixACL.html#method.entries).
+/// Returned from [`PosixACL::entries()`](crate::PosixACL::entries).
 #[derive(Debug, PartialEq)]
 pub struct ACLEntry {
     pub qual: Qualifier,
