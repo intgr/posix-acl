@@ -7,7 +7,8 @@ use std::{fmt, io};
 /// Use a bit flag to track whether error was caused by read or write
 pub(crate) const FLAG_WRITE: u32 = 0x4000_0000;
 
-/// Error type from ACL operations. To distinguish different causes, use the `kind()` method.
+/// Error type from ACL operations. To distinguish different causes, use the [`kind()`](Self::kind)
+/// method.
 //
 // Perhaps an overkill, I could have used io::Error instead.
 // But now that I wrote this, might as well keep it. :)
@@ -37,7 +38,7 @@ pub struct ValidationErrorDetail {
 }
 
 impl Error for ACLError {
-    /// Get underlying `io::Error` value.
+    /// Get underlying [`std::io::Error`] value.
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             ValidationError(..) => None,
@@ -62,7 +63,7 @@ impl fmt::Display for ACLError {
 }
 
 impl ACLError {
-    /// Get a general category of error, as `std::io::ErrorKind`.
+    /// Get a general category of error, as [`std::io::ErrorKind`].
     /// Validation errors get returned as `InvalidData`.
     ///
     /// ```
