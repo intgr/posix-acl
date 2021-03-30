@@ -13,6 +13,7 @@ pub(crate) const FLAG_WRITE: u32 = 0x4000_0000;
 // Perhaps an overkill, I could have used io::Error instead.
 // But now that I wrote this, might as well keep it. :)
 #[derive(Debug)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum ACLError {
     /// Error reading or writing ACL.
     IoError(IoErrorDetail),

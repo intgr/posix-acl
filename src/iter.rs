@@ -3,6 +3,7 @@ use crate::PosixACL;
 use acl_sys::{acl_entry_t, acl_get_entry, ACL_FIRST_ENTRY, ACL_NEXT_ENTRY};
 use std::ptr::null_mut;
 
+#[allow(clippy::upper_case_acronyms)]
 pub(crate) struct RawACLIterator<'a> {
     acl: &'a PosixACL,
     next: i32,
