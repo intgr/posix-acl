@@ -26,10 +26,10 @@ RUN if test -n "$components"; then rustup component add $components; fi
 COPY Cargo.toml ./
 RUN mkdir src/ && \
 	echo "pub fn main() {println!(\"dummy function\")}" > src/lib.rs && \
-	cargo build --lib --tests --color=always && \
+	cargo build --lib --tests --examples --color=always && \
 	rm -rdv target/*/deps/posix_acl-* \
 	        target/*/.fingerprint/posix-acl-*
 
 # Do the actual build
 COPY . .
-RUN cargo build --lib --tests --color=always
+RUN cargo build --lib --tests --examples --color=always
