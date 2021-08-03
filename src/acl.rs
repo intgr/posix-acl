@@ -151,7 +151,7 @@ impl PosixACL {
 
     /// Iterator of `acl_entry_t`, unsafe
     pub(crate) unsafe fn raw_iter(&self) -> RawACLIterator {
-        RawACLIterator::new(&self)
+        RawACLIterator::new(self)
     }
 
     /// Get all ACLEntry items. The POSIX ACL C API does not allow multiple parallel iterators so we
