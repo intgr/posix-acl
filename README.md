@@ -46,6 +46,13 @@ fn main() {
 
 Release history
 ---------------
+##### 1.1.0 (2022-05-25)
+
+* Added `ACLError::as_io_error()` method to access the underlying `std::io::Error` instance (#57)
+* Minor: Documentation tweaks (#46)
+* Minor: Clippy warnings fixed (#47, #49)
+* Minor: CI/tests improvements (#44, #58)
+
 ##### 1.0.0 (2020-03-30)
 
 * **API change:** Now using `ACLError` structured error type instead of `SimpleError` (#39)
