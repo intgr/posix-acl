@@ -88,7 +88,7 @@ impl PosixACL {
     /// Read a path's access ACL and return as `PosixACL` object.
     /// ```
     /// use posix_acl::PosixACL;
-    /// let acl = PosixACL::read_acl("/etc/motd").unwrap();
+    /// let acl = PosixACL::read_acl("/etc/shells").unwrap();
     /// ```
     pub fn read_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, ACLError> {
         Self::read_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
