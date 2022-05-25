@@ -80,7 +80,7 @@ impl ACLError {
         }
     }
 
-    /// Get underlying `std::io::Error` that occurred.
+    /// Get reference to underlying `std::io::Error` that occurred, if any.
     ///
     /// ```
     /// use posix_acl::PosixACL;
