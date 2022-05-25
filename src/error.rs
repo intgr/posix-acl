@@ -91,7 +91,7 @@ impl ACLError {
     pub fn as_io_error(&self) -> Option<&io::Error> {
         match self {
             ValidationError(_) => None,
-            IoError(IoErrorDetail { ref err, .. }) => Some(&err),
+            IoError(IoErrorDetail { ref err, .. }) => Some(err),
         }
     }
 
