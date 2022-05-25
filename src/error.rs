@@ -80,6 +80,21 @@ impl ACLError {
         }
     }
 
+    /// Get underlying `std::io::Error` that occurred.
+    ///
+    /// ```
+    /// use posix_acl::PosixACL;
+    /// use std::io::ErrorKind;
+    /// let err = PosixACL::read_acl("/tmp/this-file-does-not-exist").unwrap_err();
+    /// assert_eq!(err.as_io_error().unwrap().raw_os_error().unwrap(), libc::ENOENT);
+    /// ```
+    pub fn as_io_error(&self) -> Option<&io::Error> {
+        match self {
+            ValidationError(_) => None,
+            IoError(IoErrorDetail { ref err, .. }) => Some(&err),
+        }
+    }
+
     pub(crate) fn last_os_error(flags: u32) -> ACLError {
         IoError(IoErrorDetail {
             err: io::Error::last_os_error(),
