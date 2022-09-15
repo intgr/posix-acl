@@ -16,7 +16,7 @@
 //! ```
 //! use posix_acl::{PosixACL, Qualifier, ACL_READ, ACL_WRITE};
 //!
-//! # std::fs::File::create("/tmp/posix-acl-testfile");
+//! # std::fs::File::create("/tmp/posix-acl-testfile").unwrap();
 //! // Read ACL from file (if there is no ACL yet, the OS will synthesize one)
 //! let mut acl = PosixACL::read_acl("/tmp/posix-acl-testfile").unwrap();
 //!

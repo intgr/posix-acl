@@ -46,6 +46,10 @@ fn main() {
 
 Release history
 ---------------
+##### UNRELEASED
+
+* `Qualifier` and `ACLEntry` now implement `Eq` (in addition to `PartialEq`) (#61)
+
 ##### 1.1.0 (2022-05-25)
 
 * Added `ACLError::as_io_error()` method to access the underlying `std::io::Error` instance (#57)
