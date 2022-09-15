@@ -7,7 +7,7 @@ use acl_sys::{
 use std::ptr::null_mut;
 
 /// The subject of a permission grant.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Qualifier {
     /// Unrecognized/corrupt entries
     Undefined,
