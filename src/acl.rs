@@ -207,14 +207,10 @@ impl PosixACL {
     }
 
     fn raw_get_entry(&self, qual: &Qualifier) -> Option<acl_entry_t> {
-        for entry in unsafe { self.raw_iter() } {
+        unsafe { self.raw_iter() }.find(
             // XXX this is slightly inefficient, calls to get_entry_uid() could be short-circuited.
-            if Qualifier::from_entry(entry) == *qual {
-                // Found it!
-                return Some(entry);
-            }
-        }
-        None
+            |&entry| Qualifier::from_entry(entry) == *qual,
+        )
     }
 
     fn raw_add_entry(&mut self, qual: &Qualifier) -> acl_entry_t {
