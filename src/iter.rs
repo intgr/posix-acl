@@ -38,11 +38,16 @@ impl<'a> Iterator for RawACLIterator<'a> {
 
 /** Demonstrate that multiple iterators cannot exist in parallel :( */
 #[test]
-#[should_panic(expected = "assertion failed: ")]
 fn multi_iterator() {
     let acl = PosixACL::new(0o640);
     let iter1 = unsafe { acl.raw_iter() };
     let iter2 = unsafe { acl.raw_iter() };
 
-    iter1.zip(iter2).for_each(|(a, b)| assert_eq!(a, b))
+    let results: Vec<_> = iter1.zip(iter2).collect();
+    // First item from each iterator is correct
+    assert_eq!(results[0].0, results[0].1);
+    // Then it gets out of whack
+    assert_ne!(results[1].0, results[1].1);
+
+    assert_eq!(results.len(), 2);
 }
