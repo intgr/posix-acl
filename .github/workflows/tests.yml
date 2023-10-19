@@ -16,7 +16,7 @@ jobs:
   rust-nightly:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build on Rust NIGHTLY
         # language: shell-script
         run: |
@@ -38,7 +38,7 @@ jobs:
   rust-stable:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build on Rust STABLE
         run: |
           docker build . --pull \
