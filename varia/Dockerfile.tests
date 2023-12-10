@@ -5,11 +5,11 @@ ARG rust=nightly
 # Using Dockerfile conditionals
 #### Base image for STABLE
 FROM rust AS cargo-base-stable
-ENV components="rustfmt clippy" buildflags="--tests"
+ENV components="rustfmt clippy" buildflags="--tests --examples"
 
 #### Base image for NIGHTLY
 FROM rustlang/rust:nightly AS cargo-base-nightly
-ENV components="" buildflags="--tests"
+ENV components="" buildflags="--tests --examples"
 
 #### Base image for MSRV
 FROM rust:1.60.0 AS cargo-base-msrv
