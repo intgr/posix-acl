@@ -11,7 +11,7 @@ use std::process::exit;
 fn print_acl(acl: PosixACL) {
     let entries = acl.entries();
     if entries.is_empty() {
-        // Happens
+        // If no "default" ACL has been set on directories, they have 0 entries.
         println!("    (no entries)")
     }
     for entry in entries {
@@ -61,6 +61,7 @@ fn main() {
         let path = Path::new(&filename);
         errs += handle_acl_result(PosixACL::read_acl(path), path, "ACL");
 
+        // Only directories have "default" ACLs
         if path.is_dir() {
             errs += handle_acl_result(PosixACL::read_default_acl(path), path, "DEFAULT");
         }
