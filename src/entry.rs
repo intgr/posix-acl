@@ -72,7 +72,7 @@ impl Qualifier {
 }
 
 /// Returned from [`PosixACL::entries()`](crate::PosixACL::entries).
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct ACLEntry {
     pub qual: Qualifier,
