@@ -12,7 +12,7 @@ FROM rustlang/rust:nightly AS cargo-base-nightly
 ENV components="" buildflags="--tests"
 
 #### Base image for MSRV
-FROM rust:1.60.0 AS cargo-base-msrv
+FROM rust:1.74.1 AS cargo-base-msrv
 # Don't build tests: dev-dependencies are incompatible with MSRV.
 ENV components="" buildflags=""
 
