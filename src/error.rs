@@ -112,10 +112,10 @@ impl ACLError {
 
 /// `acl_type_t` string representation for error messages
 pub(crate) fn op_display(flags: u32) -> &'static str {
-    if flags & FLAG_WRITE == 0 {
-        "reading"
-    } else {
+    if flags & FLAG_WRITE == FLAG_WRITE {
         "writing"
+    } else {
+        "reading"
     }
 }
 
