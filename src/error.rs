@@ -15,7 +15,7 @@ pub(crate) const FLAG_WRITE: u32 = 0x4000_0000;
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum ACLError {
-    /// Error reading or writing ACL.
+    /// Filesystem error while reading or writing ACL (file not found, permission denied, etc).
     IoError(IoErrorDetail),
     /// ACL is not valid and cannot be written.
     ///
