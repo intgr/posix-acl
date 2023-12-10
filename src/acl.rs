@@ -185,6 +185,7 @@ impl PosixACL {
 
     /// Get all `ACLEntry` items. The POSIX ACL C API does not allow multiple parallel iterators so we
     /// return a materialized vector just to be safe.
+    #[must_use]
     pub fn entries(&self) -> Vec<ACLEntry> {
         unsafe { self.raw_iter() }
             .map(ACLEntry::from_entry)
