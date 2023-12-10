@@ -5,11 +5,11 @@ ARG rust=nightly
 # Using Dockerfile conditionals
 #### Base image for STABLE
 FROM rust AS cargo-base-stable
-ENV components="rustfmt clippy" buildflags="--tests"
+ENV components="rustfmt clippy" buildflags="--tests --examples"
 
 #### Base image for NIGHTLY
 FROM rustlang/rust:nightly AS cargo-base-nightly
-ENV components="" buildflags="--tests"
+ENV components="" buildflags="--tests --examples"
 
 #### Base image for MSRV
 FROM rust:1.60.0 AS cargo-base-msrv
@@ -30,10 +30,10 @@ RUN if test -n "$components"; then rustup component add $components; fi
 COPY Cargo.toml ./
 RUN mkdir src/ && \
 	echo "pub fn main() {println!(\"dummy function\")}" > src/lib.rs && \
-	cargo build --lib --examples $buildflags --color=always && \
+	cargo build --lib $buildflags --color=always && \
 	rm -rdv target/*/deps/posix_acl-* \
 	        target/*/.fingerprint/posix-acl-*
 
 # Do the actual build
 COPY . .
-RUN cargo build --lib --examples $buildflags --color=always
+RUN cargo build --lib $buildflags --color=always
