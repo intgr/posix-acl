@@ -23,7 +23,7 @@ jobs:
           docker build . --pull \
             -f varia/Dockerfile.tests \
             --target=cargo-build \
-            --build-arg=channel=nightly \
+            --build-arg=rust=nightly \
             --tag=posixacl-nightly
       - name: Test suite
         run: docker run --rm posixacl-nightly cargo test --color=always
@@ -44,7 +44,7 @@ jobs:
           docker build . --pull \
             -f varia/Dockerfile.tests \
             --target=cargo-build \
-            --build-arg=channel=stable \
+            --build-arg=rust=stable \
             --tag=posixacl-stable
       - name: Test suite
         run: docker run --rm posixacl-stable cargo test --color=always
@@ -54,3 +54,15 @@ jobs:
         run: docker run --rm posixacl-stable cargo clippy --color=always
       - name: rustfmt
         run: docker run --rm posixacl-stable cargo fmt -- --color=always --check
+
+  rust-msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build on Rust MSRV
+        run: |
+          docker build . --pull \
+            -f varia/Dockerfile.tests \
+            --target=cargo-build \
+            --build-arg=rust=msrv \
+            --tag=posixacl-msrv
