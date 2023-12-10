@@ -1,7 +1,7 @@
 use crate::error::{ACLError, FLAG_WRITE};
 use crate::iter::RawACLIterator;
 use crate::util::{check_pointer, check_return, path_to_cstring, AutoPtr};
-use crate::Qualifier::*;
+use crate::Qualifier::{GroupObj, Other, UserObj};
 use crate::{ACLEntry, Qualifier, ACL_RWX};
 use acl_sys::{
     acl_add_perm, acl_calc_mask, acl_clear_perms, acl_create_entry, acl_delete_entry, acl_entry_t,
@@ -10,9 +10,10 @@ use acl_sys::{
     ACL_TYPE_ACCESS, ACL_TYPE_DEFAULT,
 };
 use libc::ssize_t;
+use std::convert::TryFrom;
 use std::os::raw::c_void;
 use std::path::Path;
-use std::ptr::null_mut;
+use std::ptr::{addr_of, null_mut};
 use std::slice::from_raw_parts;
 use std::str::from_utf8;
 use std::{fmt, mem};
@@ -84,7 +85,8 @@ impl PosixACL {
     /// Create an empty ACL with capacity. NB! Empty ACLs are NOT considered valid.
     #[must_use]
     pub fn with_capacity(capacity: usize) -> PosixACL {
-        let acl = unsafe { acl_init(capacity as i32) };
+        let capacity = i32::try_from(capacity).unwrap_or(i32::MAX);
+        let acl = unsafe { acl_init(capacity) };
         check_pointer(acl, "acl_init");
         PosixACL { acl }
     }
@@ -255,7 +257,7 @@ impl PosixACL {
             check_return(acl_set_tag_type(entry, qual.tag_type()), "acl_set_tag_type");
             if let Some(uid) = qual.uid() {
                 check_return(
-                    acl_set_qualifier(entry, &uid as *const u32 as *const c_void),
+                    acl_set_qualifier(entry, addr_of!(uid).cast::<c_void>()),
                     "acl_set_qualifier",
                 );
             }
@@ -286,9 +288,10 @@ impl PosixACL {
         let mut len: ssize_t = 0;
         let txt = AutoPtr(unsafe { acl_to_text(self.acl, &mut len) });
         check_pointer(txt.0, "acl_to_text");
-        let chars = unsafe { from_raw_parts(txt.0 as *const u8, len as usize) };
+        let len = usize::try_from(len).expect("Length should be positive");
+        let chars = unsafe { from_raw_parts(txt.0.cast::<u8>(), len) };
 
-        from_utf8(chars).unwrap().to_string()
+        from_utf8(chars).expect("Not valid UTF-8").to_string()
     }
 
     fn compact_text(&self) -> String {
