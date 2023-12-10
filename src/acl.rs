@@ -95,7 +95,9 @@ impl PosixACL {
     /// # Errors
     /// * `ACLError::IoError`: Filesystem errors (file not found, permission denied, etc).
     ///
-    /// It is *NOT* an error if the provided path has no ACL; a minimal ACL will be returned.
+    /// <div class="warning">
+    /// It is NOT an error if the provided path has no ACL; a minimal ACL will be returned.
+    /// </div>
     pub fn read_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, ACLError> {
         Self::read_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
     }
@@ -112,8 +114,11 @@ impl PosixACL {
     ///
     /// # Errors
     /// * `ACLError::IoError`: Filesystem errors (file not found, permission denied, etc).
+    /// * Passing a non-directory path will fail with 'permission denied' error on Linux.
     ///
-    /// It is *NOT* an error if the provided path has no ACL; a minimal ACL will be returned.
+    /// <div class="warning">
+    /// It is NOT an error if the provided path has no ACL; an empty ACL will be returned.
+    /// </div>
     pub fn read_default_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, ACLError> {
         Self::read_acl_flags(path.as_ref(), ACL_TYPE_DEFAULT)
     }
