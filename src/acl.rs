@@ -54,7 +54,8 @@ impl PosixACL {
     /// Note that modes are usually expressed in octal, e.g. `PosixACL::new(0o644)`
     ///
     /// This creates the minimal required entries. By the POSIX ACL spec, every valid ACL must
-    /// contain at least three entries: UserObj, GroupObj and Other, corresponding to file mode bits.
+    /// contain at least three entries: `UserObj`, `GroupObj` and `Other`, corresponding to file
+    /// mode bits.
     ///
     /// Input bits higher than 9 (e.g. SUID flag, etc) are ignored.
     ///
@@ -90,6 +91,13 @@ impl PosixACL {
     /// use posix_acl::PosixACL;
     /// let acl = PosixACL::read_acl("/etc/shells").unwrap();
     /// ```
+    ///
+    /// # Errors
+    /// * `ACLError::IoError`: Filesystem errors (file not found, permission denied, etc).
+    ///
+    /// <div class="warning">
+    /// It is NOT an error if the provided path has no ACL; a minimal ACL will be returned.
+    /// </div>
     pub fn read_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, ACLError> {
         Self::read_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
     }
@@ -103,6 +111,14 @@ impl PosixACL {
     /// use posix_acl::PosixACL;
     /// let acl = PosixACL::read_default_acl("/tmp").unwrap();
     /// ```
+    ///
+    /// # Errors
+    /// * `ACLError::IoError`: Filesystem errors (file not found, permission denied, etc).
+    /// * Passing a non-directory path will fail with 'permission denied' error on Linux.
+    ///
+    /// <div class="warning">
+    /// It is NOT an error if the provided path has no ACL; an empty ACL will be returned.
+    /// </div>
     pub fn read_default_acl<P: AsRef<Path>>(path: P) -> Result<PosixACL, ACLError> {
         Self::read_acl_flags(path.as_ref(), ACL_TYPE_DEFAULT)
     }
@@ -121,6 +137,11 @@ impl PosixACL {
     ///
     /// Note: this function takes mutable `self` because it automatically re-calculates the magic
     /// `Mask` entry.
+    ///
+    /// # Errors
+    /// * `ACLError::IoError`: Filesystem errors (file not found, permission denied, etc).
+    /// * `ACLError::ValidationError`: The ACL failed validation. See [`PosixACL::validate()`] for
+    ///    more information.
     pub fn write_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ACLError> {
         self.write_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
     }
@@ -133,6 +154,11 @@ impl PosixACL {
     ///
     /// Note: this function takes mutable `self` because it automatically re-calculates the magic
     /// `Mask` entry.
+    ///
+    /// # Errors
+    /// * `ACLError::IoError`: Filesystem errors (file not found, permission denied, etc).
+    /// * `ACLError::ValidationError`: The ACL failed validation. See [`PosixACL::validate()`] for
+    ///    more information.
     pub fn write_default_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ACLError> {
         self.write_acl_flags(path.as_ref(), ACL_TYPE_DEFAULT)
     }
@@ -154,7 +180,7 @@ impl PosixACL {
         RawACLIterator::new(self)
     }
 
-    /// Get all ACLEntry items. The POSIX ACL C API does not allow multiple parallel iterators so we
+    /// Get all `ACLEntry` items. The POSIX ACL C API does not allow multiple parallel iterators so we
     /// return a materialized vector just to be safe.
     pub fn entries(&self) -> Vec<ACLEntry> {
         unsafe { self.raw_iter() }
@@ -245,6 +271,11 @@ impl PosixACL {
     /// (`'\n'`).
     ///
     /// UID/GID are automatically resolved to names by the platform.
+    ///
+    /// # Panics
+    ///
+    /// When platform returns a string that is not valid UTF-8.
+    #[must_use]
     pub fn as_text(&self) -> String {
         let mut len: ssize_t = 0;
         let txt = AutoPtr(unsafe { acl_to_text(self.acl, &mut len) });
@@ -265,6 +296,9 @@ impl PosixACL {
     /// If you didn't take special care of the `Mask` entry, it may be necessary to call
     /// `fix_mask()` prior to `validate()`.
     ///
+    /// # Errors
+    /// * `ACLError::ValidationError`: The ACL failed validation.
+    ///
     /// Unfortunately it is not possible to provide detailed error reasons, but mainly it can be:
     /// * Required entries are missing (`UserObj`, `GroupObj`, `Mask` and `Other`).
     /// * ACL contains entries that are not unique.
@@ -282,8 +316,9 @@ impl PosixACL {
     ///
     /// To avoid a memory leak, the `acl_t` must either:
     ///
-    /// - Be converted back to a PosixACL using `PosixACL::from_raw`
-    /// - Have `acl_free` called on it
+    /// - Be converted back to a `PosixACL` using [`PosixACL::from_raw()`]
+    /// - Have `acl_free()` called on it
+    //
     // Note: it's typically considered safe for Rust functions to leak resources (in this specific
     // case, the function is analogous to the safe `Rc::into_raw` function in the standard library).
     // For more discussion on this, see [the nomicon](https://doc.rust-lang.org/nomicon/leaking.html).
@@ -298,10 +333,10 @@ impl PosixACL {
     ///
     /// # Safety
     ///
-    /// The `acl_t` must be a valid acl (not `(acl_t)NULL`) acl returned
-    /// either `PosixACL::into_raw` or another acl library function.
+    /// The `acl_t` must be a valid ACL (not `(acl_t)NULL`) acl returned
+    /// either [`PosixACL::into_raw()`] or another ACL library function.
     ///
-    /// Improper usage of this function may lead to memory problems (e.g.
+    /// Improper usage of this function may lead to memory unsafety (e.g.
     /// calling it twice on the same acl may lead to a double free).
     pub unsafe fn from_raw(acl: acl_t) -> Self {
         Self { acl }

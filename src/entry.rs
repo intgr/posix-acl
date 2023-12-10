@@ -7,7 +7,7 @@ use acl_sys::{
 use std::ptr::null_mut;
 
 /// The subject of a permission grant.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Qualifier {
     /// Unrecognized/corrupt entries
     Undefined,
@@ -43,7 +43,7 @@ impl Qualifier {
             _ => None,
         }
     }
-    /// Convert C type acl_entry_t to Rust Qualifier
+    /// Convert C type `acl_entry_t` to Rust Qualifier
     pub(crate) fn from_entry(entry: acl_entry_t) -> Qualifier {
         let tag_type = 0;
         let ret = unsafe { acl_get_tag_type(entry, &tag_type) };
@@ -61,7 +61,7 @@ impl Qualifier {
             }
         }
     }
-    /// Helper function for from_entry()
+    /// Helper function for `from_entry()`
     fn get_entry_uid(entry: acl_entry_t) -> u32 {
         unsafe {
             let uid = AutoPtr(acl_get_qualifier(entry) as *mut u32);
@@ -72,7 +72,7 @@ impl Qualifier {
 }
 
 /// Returned from [`PosixACL::entries()`](crate::PosixACL::entries).
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct ACLEntry {
     pub qual: Qualifier,
@@ -80,7 +80,7 @@ pub struct ACLEntry {
 }
 
 impl ACLEntry {
-    /// Convert C type acl_entry_t to Rust ACLEntry
+    /// Convert C type `acl_entry_t` to Rust `ACLEntry`
     pub(crate) fn from_entry(entry: acl_entry_t) -> ACLEntry {
         let perm;
         let mut permset: acl_permset_t = null_mut();
