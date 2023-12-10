@@ -1,19 +1,23 @@
 # This Dockerfile is mostly for CI, see .github/workflows/tests.yml
 # Run with --build-arg=channel=stable OR --build-arg=channel=nightly (default)
-ARG channel=nightly
+ARG rust=nightly
 
 # Using Dockerfile conditionals
 #### Base image for STABLE
 FROM rust AS cargo-base-stable
-ENV components="rustfmt clippy"
+ENV components="rustfmt clippy" buildflags="--tests"
 
 #### Base image for NIGHTLY
 FROM rustlang/rust:nightly AS cargo-base-nightly
-# clippy and rustfmt are frequently broken in nightly
-ENV components=""
+ENV components="" buildflags="--tests"
+
+#### Base image for MSRV
+FROM rust:1.42.0 AS cargo-base-msrv
+# Don't build tests: dev-dependencies are incompatible with MSRV.
+ENV components="" buildflags=""
 
 #### Common logic for base image
-FROM cargo-base-$channel AS cargo-build
+FROM cargo-base-$rust AS cargo-build
 WORKDIR /root/build
 # Make warnings fatal
 ENV RUSTFLAGS="-D warnings"
@@ -26,10 +30,10 @@ RUN if test -n "$components"; then rustup component add $components; fi
 COPY Cargo.toml ./
 RUN mkdir src/ && \
 	echo "pub fn main() {println!(\"dummy function\")}" > src/lib.rs && \
-	cargo build --lib --tests --color=always && \
+	cargo build --lib $buildflags --color=always && \
 	rm -rdv target/*/deps/posix_acl-* \
 	        target/*/.fingerprint/posix-acl-*
 
 # Do the actual build
 COPY . .
-RUN cargo build --lib --tests --color=always
+RUN cargo build --lib $buildflags --color=always
