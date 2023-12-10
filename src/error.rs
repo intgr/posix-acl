@@ -14,6 +14,7 @@ pub(crate) const FLAG_WRITE: u32 = 0x4000_0000;
 // But now that I wrote this, might as well keep it. :)
 #[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::module_name_repetitions)]
 pub enum ACLError {
     /// Filesystem error while reading or writing ACL (file not found, permission denied, etc).
     IoError(IoErrorDetail),
@@ -111,7 +112,7 @@ impl ACLError {
 
 /// `acl_type_t` string representation for error messages
 pub(crate) fn op_display(flags: u32) -> &'static str {
-    if flags & FLAG_WRITE != 0 {
+    if flags & FLAG_WRITE == FLAG_WRITE {
         "writing"
     } else {
         "reading"

@@ -1,5 +1,5 @@
 use crate::util::{check_pointer, check_return, AutoPtr};
-use crate::Qualifier::*;
+use crate::Qualifier::{Group, GroupObj, Mask, Other, Undefined, User, UserObj};
 use acl_sys::{
     acl_entry_t, acl_get_permset, acl_get_qualifier, acl_get_tag_type, acl_permset_t, ACL_GROUP,
     ACL_GROUP_OBJ, ACL_MASK, ACL_OTHER, ACL_UNDEFINED_TAG, ACL_USER, ACL_USER_OBJ,
@@ -26,7 +26,7 @@ pub enum Qualifier {
 }
 
 impl Qualifier {
-    pub(crate) fn tag_type(&self) -> i32 {
+    pub(crate) fn tag_type(self) -> i32 {
         match self {
             Undefined => ACL_UNDEFINED_TAG,
             UserObj => ACL_USER_OBJ,
@@ -37,9 +37,9 @@ impl Qualifier {
             Other => ACL_OTHER,
         }
     }
-    pub(crate) fn uid(&self) -> Option<u32> {
+    pub(crate) fn uid(self) -> Option<u32> {
         match self {
-            User(uid) | Group(uid) => Some(*uid),
+            User(uid) | Group(uid) => Some(uid),
             _ => None,
         }
     }
@@ -64,7 +64,7 @@ impl Qualifier {
     /// Helper function for `from_entry()`
     fn get_entry_uid(entry: acl_entry_t) -> u32 {
         unsafe {
-            let uid = AutoPtr(acl_get_qualifier(entry) as *mut u32);
+            let uid = AutoPtr(acl_get_qualifier(entry).cast::<u32>());
             check_pointer(uid.0, "acl_get_qualifier");
             *uid.0
         }
@@ -74,6 +74,7 @@ impl Qualifier {
 /// Returned from [`PosixACL::entries()`](crate::PosixACL::entries).
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::module_name_repetitions)]
 pub struct ACLEntry {
     pub qual: Qualifier,
     pub perm: u32,

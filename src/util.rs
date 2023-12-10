@@ -16,19 +16,20 @@ pub(crate) struct AutoPtr<T>(pub(crate) *mut T);
 
 impl<T> Drop for AutoPtr<T> {
     fn drop(&mut self) {
-        let ret = unsafe { acl_free(self.0 as *mut c_void) };
+        let ret = unsafe { acl_free(self.0.cast::<c_void>()) };
         check_return(ret, "acl_free");
     }
 }
 
 pub(crate) fn check_return(ret: i32, func: &str) {
-    if ret != 0 {
-        panic!("Error in {}: {}", func, io::Error::last_os_error());
-    }
+    assert_eq!(ret, 0, "Error in {}: {}", func, io::Error::last_os_error());
 }
 
 pub(crate) fn check_pointer<T: ?Sized>(ret: *const T, func: &str) {
-    if ret.is_null() {
-        panic!("Error in {}: {}", func, io::Error::last_os_error());
-    }
+    assert!(
+        !ret.is_null(),
+        "Error in {}: {}",
+        func,
+        io::Error::last_os_error()
+    );
 }
