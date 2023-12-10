@@ -66,6 +66,7 @@ impl PosixACL {
     ///     "user::rwx\ngroup::r-x\nother::--x\n"
     /// );
     /// ```
+    #[must_use]
     pub fn new(file_mode: u32) -> PosixACL {
         let mut acl = PosixACL::empty();
         acl.set(UserObj, (file_mode >> 6) & ACL_RWX);
@@ -75,11 +76,13 @@ impl PosixACL {
     }
 
     /// Create an empty ACL. NB! Empty ACLs are NOT considered valid.
+    #[must_use]
     pub fn empty() -> PosixACL {
         PosixACL::with_capacity(6)
     }
 
     /// Create an empty ACL with capacity. NB! Empty ACLs are NOT considered valid.
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> PosixACL {
         let acl = unsafe { acl_init(capacity as i32) };
         check_pointer(acl, "acl_init");
@@ -182,6 +185,7 @@ impl PosixACL {
 
     /// Get all `ACLEntry` items. The POSIX ACL C API does not allow multiple parallel iterators so we
     /// return a materialized vector just to be safe.
+    #[must_use]
     pub fn entries(&self) -> Vec<ACLEntry> {
         unsafe { self.raw_iter() }
             .map(ACLEntry::from_entry)
@@ -189,6 +193,7 @@ impl PosixACL {
     }
 
     /// Get the current `perm` value of `qual`, if any.
+    #[must_use]
     pub fn get(&self, qual: Qualifier) -> Option<u32> {
         let entry = self.raw_get_entry(&qual)?;
 
@@ -210,6 +215,7 @@ impl PosixACL {
     }
 
     /// Remove entry with matching `qual`. If found, returns the matching `perm`, otherwise `None`
+    #[allow(clippy::must_use_candidate)]
     pub fn remove(&self, qual: Qualifier) -> Option<u32> {
         let entry = self.raw_get_entry(&qual)?;
         let wrapped = ACLEntry::from_entry(entry);
@@ -322,6 +328,7 @@ impl PosixACL {
     // Note: it's typically considered safe for Rust functions to leak resources (in this specific
     // case, the function is analogous to the safe `Rc::into_raw` function in the standard library).
     // For more discussion on this, see [the nomicon](https://doc.rust-lang.org/nomicon/leaking.html).
+    #[must_use]
     pub fn into_raw(self) -> acl_t {
         let acl = self.acl;
         mem::forget(self);

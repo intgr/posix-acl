@@ -41,6 +41,7 @@
 #![warn(clippy::doc_markdown)]
 #![warn(clippy::missing_errors_doc)]
 #![warn(clippy::missing_panics_doc)]
+#![warn(clippy::must_use_candidate)]
 
 mod acl;
 mod entry;

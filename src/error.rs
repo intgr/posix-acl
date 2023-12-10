@@ -73,6 +73,7 @@ impl ACLError {
     /// let err = PosixACL::read_acl("/tmp/this-file-does-not-exist").unwrap_err();
     /// assert_eq!(err.kind(), ErrorKind::NotFound);
     /// ```
+    #[must_use]
     pub fn kind(&self) -> ErrorKind {
         match self {
             ValidationError(_) => ErrorKind::InvalidData,
@@ -88,6 +89,7 @@ impl ACLError {
     /// let err = PosixACL::read_acl("/tmp/this-file-does-not-exist").unwrap_err();
     /// assert_eq!(err.as_io_error().unwrap().raw_os_error().unwrap(), libc::ENOENT);
     /// ```
+    #[must_use]
     pub fn as_io_error(&self) -> Option<&io::Error> {
         match self {
             ValidationError(_) => None,
