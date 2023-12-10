@@ -43,7 +43,7 @@ impl Qualifier {
             _ => None,
         }
     }
-    /// Convert C type acl_entry_t to Rust Qualifier
+    /// Convert C type `acl_entry_t` to Rust Qualifier
     pub(crate) fn from_entry(entry: acl_entry_t) -> Qualifier {
         let tag_type = 0;
         let ret = unsafe { acl_get_tag_type(entry, &tag_type) };
@@ -61,7 +61,7 @@ impl Qualifier {
             }
         }
     }
-    /// Helper function for from_entry()
+    /// Helper function for `from_entry()`
     fn get_entry_uid(entry: acl_entry_t) -> u32 {
         unsafe {
             let uid = AutoPtr(acl_get_qualifier(entry) as *mut u32);
@@ -80,7 +80,7 @@ pub struct ACLEntry {
 }
 
 impl ACLEntry {
-    /// Convert C type acl_entry_t to Rust ACLEntry
+    /// Convert C type `acl_entry_t` to Rust `ACLEntry`
     pub(crate) fn from_entry(entry: acl_entry_t) -> ACLEntry {
         let perm;
         let mut permset: acl_permset_t = null_mut();
