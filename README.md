@@ -48,13 +48,12 @@ Release history
 ---------------
 ##### 1.2.0 (2023-12-11)
 
-- **Added:** `Qualifier` and `ACLEntry` now implement `Copy` and `Clone` ([#69](https://github.com/intgr/posix-acl/pull/69), [#70](https://github.com/intgr/posix-acl/pull/70))
-
+- **Added:** `Qualifier` and `ACLEntry` now implement `Copy` and `Clone` ([#69](https://github.com/intgr/posix-acl/pull/69), [#70](https://github.com/intgr/posix-acl/pull/70))<br>
   Contributed by **eax-ebx**
 - **Added:** `Qualifier` and `ACLEntry` now implement `Eq` (in addition to `PartialEq`) ([#61](https://github.com/intgr/posix-acl/pull/61))
 - **Changed:** Many methods now have `#[must_use]` annotation ([#76](https://github.com/intgr/posix-acl/pull/76))
 - **Documentation:** Added separate errors/panics sections to many functions ([#71](https://github.com/intgr/posix-acl/pull/71))
-- **Documentation:** Added example CLI app for printing ACL ([#45](https://github.com/intgr/posix-acl/pull/45))
+- **Documentation:** Added example CLI app that prints ACL ([#45](https://github.com/intgr/posix-acl/pull/45))
 - **Build:** Declare Minimum Supported Rust Version (MSRV) as 1.60 ([#72](https://github.com/intgr/posix-acl/pull/72), [#74](https://github.com/intgr/posix-acl/pull/74))
 - **Build:** Enabled and fixed all Clippy pedantic lints ([#75](https://github.com/intgr/posix-acl/pull/75), [#63](https://github.com/intgr/posix-acl/pull/63))
 
