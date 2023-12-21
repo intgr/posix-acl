@@ -38,7 +38,12 @@
 //! acl.write_acl("/tmp/posix-acl-testfile").unwrap();
 //! ```
 
+#![warn(missing_docs)]
+#![warn(clippy::cargo)]
 #![warn(clippy::pedantic)]
+#![warn(clippy::impl_trait_in_params)]
+#![warn(clippy::print_stdout)]
+#![allow(clippy::module_name_repetitions)]
 
 mod acl;
 mod entry;

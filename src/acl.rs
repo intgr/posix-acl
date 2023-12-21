@@ -206,7 +206,9 @@ impl PosixACL {
     /// Set the permission of `qual` to `perm`. If this `qual` already exists, it is updated,
     /// otherwise a new one is added.
     ///
-    /// `perm` must be a combination of the `ACL_` constants, combined by binary OR.
+    /// `perm` must be a combination of [`ACL_READ`](crate::ACL_READ),
+    /// [`ACL_WRITE`](crate::ACL_WRITE), [`ACL_EXECUTE`](crate::ACL_EXECUTE),
+    /// combined using bitwise OR (`|`).
     pub fn set(&mut self, qual: Qualifier, perm: u32) {
         let entry = match self.raw_get_entry(&qual) {
             Some(v) => v,

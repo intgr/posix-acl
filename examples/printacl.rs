@@ -2,6 +2,8 @@
 //!
 //! Run with command: `cargo run --example printacl /some/path`
 
+#![warn(clippy::pedantic)]
+
 use posix_acl::Qualifier::*;
 use posix_acl::{ACLEntry, ACLError, PosixACL, ACL_EXECUTE, ACL_READ, ACL_WRITE};
 use std::env::args_os;

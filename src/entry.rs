@@ -43,6 +43,7 @@ impl Qualifier {
             _ => None,
         }
     }
+
     /// Convert C type `acl_entry_t` to Rust Qualifier
     pub(crate) fn from_entry(entry: acl_entry_t) -> Qualifier {
         let tag_type = 0;
@@ -74,9 +75,11 @@ impl Qualifier {
 /// Returned from [`PosixACL::entries()`](crate::PosixACL::entries).
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[allow(clippy::upper_case_acronyms)]
-#[allow(clippy::module_name_repetitions)]
 pub struct ACLEntry {
+    /// Who does this permission apply to?
     pub qual: Qualifier,
+    /// Permission bits applied to `qual`. A combination of [`ACL_READ`](crate::ACL_READ),
+    /// [`ACL_WRITE`](crate::ACL_WRITE), [`ACL_EXECUTE`](crate::ACL_EXECUTE).
     pub perm: u32,
 }
 
