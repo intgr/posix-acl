@@ -1,6 +1,7 @@
 # This Dockerfile is mostly for CI, see .github/workflows/tests.yml
 # Run with --build-arg=channel=stable OR --build-arg=channel=nightly (default)
 ARG rust=nightly
+ARG msrv=1.60.0
 
 # Using Dockerfile conditionals
 #### Base image for STABLE
@@ -12,7 +13,7 @@ FROM rustlang/rust:nightly AS cargo-base-nightly
 ENV components="" buildflags="--tests --examples"
 
 #### Base image for MSRV
-FROM rust:1.60.0 AS cargo-base-msrv
+FROM rust:$msrv AS cargo-base-msrv
 # Don't build tests: dev-dependencies are incompatible with MSRV.
 ENV components="" buildflags=""
 
