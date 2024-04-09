@@ -1,13 +1,13 @@
 name: Tests
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
   schedule:
     # 16:38 UTC on Tuesdays
     - cron: "38 16 * * TUE"
   repository_dispatch:
-    types: [tests]
+    types: [ tests ]
 
 env:
   DOCKER_BUILDKIT: 1
@@ -29,8 +29,9 @@ jobs:
         run: docker run --rm posixacl-nightly cargo test --color=always
       # Run sanitizer checks. Only allowed on Rust nightly. https://github.com/japaric/rust-san
       # Cannot run sanitizers from Dockerfile, CAP_PTRACE is disallowed :(
-      - name: LeakSanitizer
-        run: docker run --rm --env RUSTFLAGS="-Z sanitizer=leak" posixacl-nightly cargo test --color=always
+      # DISABLED TEMPORARILY due to https://github.com/rust-lang/rust/issues/111073
+      #- name: LeakSanitizer
+      #  run: docker run --rm --env RUSTFLAGS="-Z sanitizer=leak" posixacl-nightly cargo test --color=always
       - name: AddressSanitizer
         # --tests to omit doc tests, doesn't play nice with AddressSanitizer
         run: docker run --rm --env RUSTFLAGS="-Z sanitizer=address" posixacl-nightly cargo test --tests --color=always
