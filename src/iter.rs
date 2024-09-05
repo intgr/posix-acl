@@ -10,7 +10,7 @@ pub(crate) struct RawACLIterator<'a> {
 }
 
 impl<'a> RawACLIterator<'a> {
-    pub(crate) fn new(acl: &'a PosixACL) -> RawACLIterator {
+    pub(crate) fn new(acl: &'a PosixACL) -> RawACLIterator<'a> {
         RawACLIterator {
             acl,
             next: ACL_FIRST_ENTRY,
