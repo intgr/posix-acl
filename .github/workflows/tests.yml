@@ -54,8 +54,6 @@ jobs:
         run: docker run --rm posixacl-stable cargo fmt -- --color=always --check
 
   rust-msrv:
-    # FIXME disabled temporarily, needs MSRV bump
-    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
