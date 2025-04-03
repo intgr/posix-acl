@@ -29,9 +29,8 @@ jobs:
         run: docker run --rm posixacl-nightly cargo test --color=always
       # Run sanitizer checks. Only allowed on Rust nightly. https://github.com/japaric/rust-san
       # Cannot run sanitizers from Dockerfile, CAP_PTRACE is disallowed :(
-      # DISABLED TEMPORARILY due to https://github.com/rust-lang/rust/issues/111073
-      #- name: LeakSanitizer
-      #  run: docker run --rm --env RUSTFLAGS="-Z sanitizer=leak" posixacl-nightly cargo test --color=always
+      - name: LeakSanitizer
+        run: docker run --rm --env RUSTFLAGS="-Z sanitizer=leak" posixacl-nightly cargo test --color=always
       - name: AddressSanitizer
         # --tests to omit doc tests, doesn't play nice with AddressSanitizer
         run: docker run --rm --env RUSTFLAGS="-Z sanitizer=address" posixacl-nightly cargo test --tests --color=always
@@ -49,10 +48,8 @@ jobs:
             --tag=posixacl-stable
       - name: Test suite
         run: docker run --rm posixacl-stable cargo test --color=always
-      - name: cargo check
-        run: docker run --rm posixacl-stable cargo check --color=always
       - name: Clippy lints
-        run: docker run --rm posixacl-stable cargo clippy --color=always
+        run: docker run --rm posixacl-stable cargo clippy --color=always --all-targets --all-features -- -D warnings
       - name: rustfmt
         run: docker run --rm posixacl-stable cargo fmt -- --color=always --check
 
