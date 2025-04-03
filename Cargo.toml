@@ -2,7 +2,7 @@
 name = "posix-acl"
 version = "1.2.0"
 edition = "2018"
-rust-version = "1.60.0"
+rust-version = "1.63.0"
 
 # Metadata
 authors = ["Marti Raudsepp <marti@juffo.org>"]

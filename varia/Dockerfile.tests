@@ -1,7 +1,7 @@
 # This Dockerfile is mostly for CI, see .github/workflows/tests.yml
 # Run with --build-arg=channel=stable OR --build-arg=channel=nightly (default)
 ARG rust=nightly
-ARG msrv=1.60.0
+ARG msrv=1.63.0
 
 # Using Dockerfile conditionals
 #### Base image for STABLE
