@@ -18,7 +18,7 @@ impl<'a> RawACLIterator<'a> {
     }
 }
 
-impl<'a> Iterator for RawACLIterator<'a> {
+impl Iterator for RawACLIterator<'_> {
     type Item = acl_entry_t;
 
     fn next(&mut self) -> Option<Self::Item> {

@@ -262,6 +262,7 @@ fn read_default_acl() {
     assert_eq!(format!("{:?}", acl), "PosixACL(\"\")");
 }
 /// Test different types accepted by AsRef<Path>
+#[allow(clippy::needless_borrows_for_generic_args)]
 #[test]
 fn path_types() {
     PosixACL::read_acl("/tmp").unwrap();

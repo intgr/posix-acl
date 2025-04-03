@@ -146,7 +146,7 @@ impl PosixACL {
     /// # Errors
     /// * `ACLError::IoError`: Filesystem errors (file not found, permission denied, etc).
     /// * `ACLError::ValidationError`: The ACL failed validation. See [`PosixACL::validate()`] for
-    ///    more information.
+    ///   more information.
     pub fn write_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ACLError> {
         self.write_acl_flags(path.as_ref(), ACL_TYPE_ACCESS)
     }
@@ -163,7 +163,7 @@ impl PosixACL {
     /// # Errors
     /// * `ACLError::IoError`: Filesystem errors (file not found, permission denied, etc).
     /// * `ACLError::ValidationError`: The ACL failed validation. See [`PosixACL::validate()`] for
-    ///    more information.
+    ///   more information.
     pub fn write_default_acl<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ACLError> {
         self.write_acl_flags(path.as_ref(), ACL_TYPE_DEFAULT)
     }
