@@ -3,7 +3,7 @@ posix-acl
 
 [![Crates.io version](https://img.shields.io/crates/v/posix-acl.svg)](https://crates.io/crates/posix-acl)
 [![Documentation](https://docs.rs/posix-acl/badge.svg)](https://docs.rs/posix-acl/)
-[![Tests status](https://github.com/intgr/posix-acl/workflows/Tests/badge.svg?branch=master)](https://github.com/intgr/posix-acl/actions?query=workflow:Tests)
+[![Tests status](https://github.com/intgr/posix-acl/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/intgr/posix-acl/actions/workflows/tests.yml)
 
 **posix-acl** is a Rust library to interact with POSIX file system Access Control Lists (ACL).
 It wraps the operating system's C interface with a safe Rust API. The API is deliberately different
