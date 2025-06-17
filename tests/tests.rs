@@ -192,7 +192,7 @@ fn debug() {
     let acl = full_fixture();
 
     assert_eq!(
-        format!("{:?}", acl),
+        format!("{acl:?}"),
         "PosixACL(\"\
         user::rw-,user:root:rw-,user:55555:---,\
         group::r--,group:root:r--,group:55555:---,\
@@ -230,7 +230,7 @@ fn read_file_with_no_acl() {
 
     let acl = PosixACL::read_acl(&path).unwrap();
     assert_eq!(
-        format!("{:?}", acl),
+        format!("{acl:?}"),
         "PosixACL(\"user::rw-,group::r--,other::---\")"
     );
     assert_eq!(acl, PosixACL::new(0o640));
@@ -259,7 +259,7 @@ fn write_acl_not_found() {
 fn read_default_acl() {
     let dir = tempdir().unwrap();
     let acl = PosixACL::read_default_acl(dir.path()).unwrap();
-    assert_eq!(format!("{:?}", acl), "PosixACL(\"\")");
+    assert_eq!(format!("{acl:?}"), "PosixACL(\"\")");
 }
 /// Test different types accepted by AsRef<Path>
 #[allow(clippy::needless_borrows_for_generic_args)]
