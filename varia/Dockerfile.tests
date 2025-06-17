@@ -6,11 +6,11 @@ ARG msrv=1.63.0
 # Using Dockerfile conditionals
 #### Base image for STABLE
 FROM rust AS cargo-base-stable
-ENV components="rustfmt clippy" buildflags="--tests --examples"
+ENV components="rustfmt clippy" buildflags="--all-targets"
 
 #### Base image for NIGHTLY
 FROM rustlang/rust:nightly AS cargo-base-nightly
-ENV components="" buildflags="--tests --examples"
+ENV components="" buildflags="--all-targets"
 
 #### Base image for MSRV
 FROM rust:$msrv AS cargo-base-msrv
