@@ -181,7 +181,7 @@ impl PosixACL {
     }
 
     /// Iterator of `acl_entry_t`, unsafe
-    pub(crate) unsafe fn raw_iter(&self) -> RawACLIterator {
+    pub(crate) unsafe fn raw_iter(&self) -> RawACLIterator<'_> {
         RawACLIterator::new(self)
     }
 
