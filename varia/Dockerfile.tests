@@ -30,9 +30,10 @@ RUN if test -n "$components"; then rustup component add $components; fi
 # Build Cargo dependencies for cache
 COPY Cargo.toml ./
 RUN mkdir src/ && \
-	echo "pub fn main() {println!(\"dummy function\")}" > src/lib.rs && \
+	echo 'pub fn main() {println!("dummy function")}' > src/lib.rs && \
 	cargo build --lib $buildflags --color=always && \
-	rm -rdv target/*/deps/posix_acl-* \
+	rm -rfv target/*/build/posix-acl \
+	        target/*/deps/posix_acl-* \
 	        target/*/.fingerprint/posix-acl-*
 
 # Do the actual build
